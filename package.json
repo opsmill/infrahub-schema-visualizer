@@ -25,9 +25,8 @@
 		"index.ts"
 	],
 	"scripts": {
-		"build": "vite build",
-		"build:webview": "vite build --config vite.config.webview.ts",
-		"prepublishOnly": "npm run build:webview",
+		"build": "vite build --config vite.config.webview.ts",
+		"prepublishOnly": "npm run build",
 		"lint": "biome check ."
 	},
 	"peerDependencies": {
