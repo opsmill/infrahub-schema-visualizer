@@ -1,4 +1,4 @@
-# @infrahub/schema-visualizer
+# infrahub-schema-visualizer
 
 An interactive graph visualization component for Infrahub schema data. Built with React Flow, it displays nodes, profiles, templates, and their relationships in a draggable, zoomable canvas.
 
