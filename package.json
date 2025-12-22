@@ -1,0 +1,66 @@
+{
+	"name": "@infrahub/schema-visualizer",
+	"version": "0.0.1",
+	"type": "module",
+	"main": "index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": {
+			"types": "./index.ts",
+			"import": "./index.ts"
+		},
+		"./webview": {
+			"import": "./dist/webview/schema-visualizer.js",
+			"require": "./dist/webview/schema-visualizer.js"
+		},
+		"./webview/styles": {
+			"import": "./dist/webview/schema-visualizer.css",
+			"require": "./dist/webview/schema-visualizer.css"
+		},
+		"./dist/webview/*": "./dist/webview/*"
+	},
+	"files": [
+		"dist",
+		"src",
+		"index.ts"
+	],
+	"scripts": {
+		"build": "vite build",
+		"build:webview": "vite build --config vite.config.webview.ts",
+		"prepublishOnly": "npm run build:webview",
+		"lint": "biome check ."
+	},
+	"peerDependencies": {
+		"react": ">=18.0.0",
+		"react-dom": ">=18.0.0"
+	},
+	"peerDependenciesMeta": {
+		"react": {
+			"optional": true
+		},
+		"react-dom": {
+			"optional": true
+		}
+	},
+	"dependencies": {
+		"@dagrejs/dagre": "^1.1.8",
+		"@iconify-icon/react": "^2.3.0",
+		"@xyflow/react": "^12.6.1",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.0",
+		"html-to-image": "^1.11.11",
+		"tailwind-merge": "^3.4.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.8",
+		"@tailwindcss/vite": "^4.1.17",
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.1",
+		"react": "^19.2.1",
+		"react-dom": "^19.2.1",
+		"tailwindcss": "^4.1.17",
+		"typescript": "^5.9.3",
+		"vite": "^7.2.4"
+	}
+}
