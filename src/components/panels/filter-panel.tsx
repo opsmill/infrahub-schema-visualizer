@@ -4,9 +4,9 @@ import type {
 	NodeSchema,
 	ProfileSchema,
 	TemplateSchema,
-} from "../types/schema";
-import { cn } from "../utils/cn";
-import { getSchemaKind } from "../utils/schema-to-flow";
+} from "../../types/schema";
+import { cn } from "../../utils/cn";
+import { getSchemaKind } from "../../utils/schema-to-flow";
 
 export type SchemaItem = {
 	schema: NodeSchema | ProfileSchema | TemplateSchema;

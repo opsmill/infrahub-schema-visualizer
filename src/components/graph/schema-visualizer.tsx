@@ -25,27 +25,30 @@ import type {
 	ProfileSchema,
 	SchemaVisualizerData,
 	TemplateSchema,
-} from "../types/schema";
-import { cn } from "../utils/cn";
-import { getLayoutedElements } from "../utils/layout";
+} from "../../types/schema";
+import { cn } from "../../utils/cn";
+import { getLayoutedElements } from "../../utils/layout";
 import {
 	clearPersistedState,
 	loadPersistedState,
 	savePersistedState,
-} from "../utils/persistence";
-import { getSchemaKind, schemaToFlowFiltered } from "../utils/schema-to-flow";
+} from "../../utils/persistence";
+import {
+	getSchemaKind,
+	schemaToFlowFiltered,
+} from "../../utils/schema-to-flow";
+import { EdgeContextMenu, type EdgeInfo } from "../menus/edge-context-menu";
+import { NodeContextMenu } from "../menus/node-context-menu";
+import { FilterPanel } from "../panels/filter-panel";
+import { LegendPanel } from "../panels/legend-panel";
+import { NodeDetailsPanel } from "../panels/node-details-panel";
 import {
 	BottomToolbar,
 	type EdgeStyle,
 	type ExportFormat,
 	type LayoutDirection,
-} from "./bottom-toolbar";
-import { EdgeContextMenu, type EdgeInfo } from "./edge-context-menu";
-import { FilterPanel } from "./filter-panel";
+} from "../toolbar/bottom-toolbar";
 import { FloatingEdge } from "./floating-edge";
-import { LegendPanel } from "./legend-panel";
-import { NodeContextMenu } from "./node-context-menu";
-import { NodeDetailsPanel } from "./node-details-panel";
 import { SchemaNode } from "./schema-node";
 
 const nodeTypes: NodeTypes = {

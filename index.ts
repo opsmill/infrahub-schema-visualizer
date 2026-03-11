@@ -1,21 +1,22 @@
 // Components
-export {
-	BottomToolbar,
-	type BottomToolbarProps,
-} from "./src/components/bottom-toolbar";
-export {
-	FilterPanel,
-	type FilterPanelProps,
-} from "./src/components/filter-panel";
-export {
-	NodeDetailsPanel,
-	type NodeDetailsPanelProps,
-} from "./src/components/node-details-panel";
-export { SchemaNode } from "./src/components/schema-node";
+
+export { SchemaNode } from "./src/components/graph/schema-node";
 export {
 	SchemaVisualizer,
 	type SchemaVisualizerProps,
-} from "./src/components/schema-visualizer";
+} from "./src/components/graph/schema-visualizer";
+export {
+	FilterPanel,
+	type FilterPanelProps,
+} from "./src/components/panels/filter-panel";
+export {
+	NodeDetailsPanel,
+	type NodeDetailsPanelProps,
+} from "./src/components/panels/node-details-panel";
+export {
+	BottomToolbar,
+	type BottomToolbarProps,
+} from "./src/components/toolbar/bottom-toolbar";
 
 // Types
 export type {

@@ -1,6 +1,6 @@
 import { Icon } from "@iconify-icon/react";
-import type { NodeSchema } from "../types/schema";
-import { cn } from "../utils/cn";
+import type { NodeSchema } from "../../types/schema";
+import { cn } from "../../utils/cn";
 
 export interface NodeDetailsPanelProps {
 	schema: NodeSchema | null;
