@@ -39,14 +39,14 @@ import {
 	type EdgeStyle,
 	type ExportFormat,
 	type LayoutDirection,
-} from "./BottomToolbar";
-import { EdgeContextMenu, type EdgeInfo } from "./EdgeContextMenu";
-import { FilterPanel } from "./FilterPanel";
-import { FloatingEdge } from "./FloatingEdge";
-import { LegendPanel } from "./LegendPanel";
-import { NodeContextMenu } from "./NodeContextMenu";
-import { NodeDetailsPanel } from "./NodeDetailsPanel";
-import { SchemaNode } from "./SchemaNode";
+} from "./bottom-toolbar";
+import { EdgeContextMenu, type EdgeInfo } from "./edge-context-menu";
+import { FilterPanel } from "./filter-panel";
+import { FloatingEdge } from "./floating-edge";
+import { LegendPanel } from "./legend-panel";
+import { NodeContextMenu } from "./node-context-menu";
+import { NodeDetailsPanel } from "./node-details-panel";
+import { SchemaNode } from "./schema-node";
 
 const nodeTypes: NodeTypes = {
 	schemaNode: SchemaNode,

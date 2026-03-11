@@ -2,14 +2,20 @@
 export {
 	BottomToolbar,
 	type BottomToolbarProps,
+} from "./src/components/bottom-toolbar";
+export {
 	FilterPanel,
 	type FilterPanelProps,
+} from "./src/components/filter-panel";
+export {
 	NodeDetailsPanel,
 	type NodeDetailsPanelProps,
-	SchemaNode,
+} from "./src/components/node-details-panel";
+export { SchemaNode } from "./src/components/schema-node";
+export {
 	SchemaVisualizer,
 	type SchemaVisualizerProps,
-} from "./src/components";
+} from "./src/components/schema-visualizer";
 
 // Types
 export type {
@@ -22,12 +28,12 @@ export type {
 	SchemaType,
 	SchemaVisualizerData,
 	TemplateSchema,
-} from "./src/types";
+} from "./src/types/schema";
 
 // Utilities
+export { cn } from "./src/utils/cn";
 export {
 	applyNamespaceLayout,
-	cn,
 	getSchemaKind,
 	groupByNamespace,
 	type SchemaFlowData,
@@ -35,4 +41,4 @@ export {
 	type SchemaNodeData,
 	schemaToFlow,
 	schemaToFlowFiltered,
-} from "./src/utils";
+} from "./src/utils/schema-to-flow";
