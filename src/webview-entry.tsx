@@ -6,7 +6,7 @@
  * The bundle is completely self-contained with all styles and dependencies.
  */
 import { createRoot } from "react-dom/client";
-import { SchemaVisualizer } from "./components/SchemaVisualizer";
+import { SchemaVisualizer } from "./components/graph/schema-visualizer";
 import type { SchemaVisualizerData } from "./types/schema";
 import "./webview.css";
 

@@ -1,7 +1,7 @@
 import { Icon } from "@iconify-icon/react";
 import { Panel, useReactFlow } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 export type EdgeStyle = "bezier" | "smoothstep";
 export type LayoutDirection = "TB" | "LR";

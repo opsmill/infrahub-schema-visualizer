@@ -25,28 +25,31 @@ import type {
 	ProfileSchema,
 	SchemaVisualizerData,
 	TemplateSchema,
-} from "../types/schema";
-import { cn } from "../utils/cn";
-import { getLayoutedElements } from "../utils/layout";
+} from "../../types/schema";
+import { cn } from "../../utils/cn";
+import { getLayoutedElements } from "../../utils/layout";
 import {
 	clearPersistedState,
 	loadPersistedState,
 	savePersistedState,
-} from "../utils/persistence";
-import { getSchemaKind, schemaToFlowFiltered } from "../utils/schema-to-flow";
+} from "../../utils/persistence";
+import {
+	getSchemaKind,
+	schemaToFlowFiltered,
+} from "../../utils/schema-to-flow";
+import { EdgeContextMenu, type EdgeInfo } from "../menus/edge-context-menu";
+import { NodeContextMenu } from "../menus/node-context-menu";
+import { FilterPanel } from "../panels/filter-panel";
+import { LegendPanel } from "../panels/legend-panel";
+import { NodeDetailsPanel } from "../panels/node-details-panel";
 import {
 	BottomToolbar,
 	type EdgeStyle,
 	type ExportFormat,
 	type LayoutDirection,
-} from "./BottomToolbar";
-import { EdgeContextMenu, type EdgeInfo } from "./EdgeContextMenu";
-import { FilterPanel } from "./FilterPanel";
-import { FloatingEdge } from "./FloatingEdge";
-import { LegendPanel } from "./LegendPanel";
-import { NodeContextMenu } from "./NodeContextMenu";
-import { NodeDetailsPanel } from "./NodeDetailsPanel";
-import { SchemaNode } from "./SchemaNode";
+} from "../toolbar/bottom-toolbar";
+import { FloatingEdge } from "./floating-edge";
+import { SchemaNode } from "./schema-node";
 
 const nodeTypes: NodeTypes = {
 	schemaNode: SchemaNode,

@@ -1,7 +1,7 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 import { resolve } from "path";
+import { defineConfig } from "vite";
 
 // Configuration for building a webview bundle for VSCode extension
 // This creates a self-contained bundle with React, styles, and icons included

@@ -1,4 +1,4 @@
-import type { EdgeStyle } from "../components/BottomToolbar";
+import type { EdgeStyle } from "../components/bottom-toolbar";
 
 const STORAGE_KEY = "schema-visualizer-state";
 

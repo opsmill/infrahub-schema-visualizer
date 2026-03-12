@@ -1,8 +1,8 @@
 import { Icon } from "@iconify-icon/react";
 import { Handle, type NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
-import { cn } from "../utils/cn";
-import type { SchemaNodeData } from "../utils/schema-to-flow";
+import { cn } from "../../utils/cn";
+import type { SchemaNodeData } from "../../utils/schema-to-flow";
 
 // Get header colors based on schema type
 const getHeaderColors = (
