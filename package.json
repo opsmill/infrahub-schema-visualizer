@@ -1,5 +1,5 @@
 {
-	"name": "infrahub-schema-visualizer",
+	"name": "@infrahub/schema-visualizer",
 	"version": "0.0.2",
 	"type": "module",
 	"main": "index.ts",
