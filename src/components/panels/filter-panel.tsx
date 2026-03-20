@@ -27,11 +27,11 @@ export interface FilterPanelProps {
 const getTypeBadgeColor = (type: "node" | "profile" | "template") => {
 	switch (type) {
 		case "profile":
-			return "bg-pink-100 text-pink-700";
+			return "bg-[#7F22FE]/10 text-[#7F22FE]";
 		case "template":
-			return "bg-amber-100 text-amber-700";
+			return "bg-[#F54900]/10 text-[#F54900]";
 		default:
-			return "bg-indigo-100 text-indigo-700";
+			return "bg-[#087895]/10 text-[#087895]";
 	}
 };
 

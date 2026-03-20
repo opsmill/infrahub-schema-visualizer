@@ -204,7 +204,7 @@ export function schemaToFlowFiltered(
 						targetCardinality: rel.cardinality, // The cardinality defined on this relationship
 					},
 					style: {
-						stroke: rel.inherited ? "#9ca3af" : getEdgeColorForType(schemaType),
+						stroke: rel.inherited ? "#009966" : getEdgeColorForType(schemaType),
 						strokeWidth: 2,
 					},
 				});
@@ -245,7 +245,7 @@ export function schemaToFlowFiltered(
 							targetCardinality: rel.cardinality,
 						},
 						style: {
-							stroke: "#10b981", // Green for generic-inherited relationships
+							stroke: "#009966", // Green for generic-inherited relationships
 							strokeWidth: 2,
 							strokeDasharray: "5,5", // Dashed line for inherited
 						},
@@ -261,11 +261,11 @@ export function schemaToFlowFiltered(
 	): string => {
 		switch (schemaType) {
 			case "profile":
-				return "#ec4899"; // Pink for profiles
+				return "#7F22FE"; // Purple for profiles
 			case "template":
-				return "#f59e0b"; // Amber for templates
+				return "#F54900"; // Orange for templates
 			default:
-				return "#6366f1"; // Indigo for nodes
+				return "#087895"; // Teal for nodes
 		}
 	};
 

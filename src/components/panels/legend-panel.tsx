@@ -41,19 +41,19 @@ export function LegendPanel() {
 							</h4>
 							<div className="space-y-2">
 								<div className="flex items-center gap-2">
-									<div className="w-4 h-4 rounded bg-gradient-to-r from-indigo-500 to-indigo-600" />
+									<div className="w-4 h-4 rounded bg-[#087895]" />
 									<span className="text-xs text-gray-600">Node</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-4 h-4 rounded bg-gradient-to-r from-pink-500 to-pink-600" />
+									<div className="w-4 h-4 rounded bg-[#7F22FE]" />
 									<span className="text-xs text-gray-600">Profile</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-4 h-4 rounded bg-gradient-to-r from-amber-500 to-amber-600" />
+									<div className="w-4 h-4 rounded bg-[#F54900]" />
 									<span className="text-xs text-gray-600">Template</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-4 h-4 rounded bg-gradient-to-r from-emerald-500 to-emerald-600" />
+									<div className="w-4 h-4 rounded bg-[#009966]" />
 									<span className="text-xs text-gray-600">Generic</span>
 								</div>
 							</div>
@@ -66,25 +66,25 @@ export function LegendPanel() {
 							</h4>
 							<div className="space-y-2">
 								<div className="flex items-center gap-2">
-									<div className="w-8 h-0.5 bg-indigo-500" />
+									<div className="w-8 h-0.5 bg-[#087895]" />
 									<span className="text-xs text-gray-600">
 										Node relationship
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-8 h-0.5 bg-pink-500" />
+									<div className="w-8 h-0.5 bg-[#7F22FE]" />
 									<span className="text-xs text-gray-600">
 										Profile relationship
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-8 h-0.5 bg-amber-500" />
+									<div className="w-8 h-0.5 bg-[#F54900]" />
 									<span className="text-xs text-gray-600">
 										Template relationship
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div className="w-8 h-0.5 bg-gray-400" />
+									<div className="w-8 h-0.5 bg-[#009966]" />
 									<span className="text-xs text-gray-600">
 										Inherited relationship
 									</span>
@@ -99,7 +99,7 @@ export function LegendPanel() {
 							</h4>
 							<div className="space-y-2">
 								<div className="flex items-center gap-2">
-									<div className="w-8 h-0.5 bg-indigo-500" />
+									<div className="w-8 h-0.5 bg-[#087895]" />
 									<span className="text-xs text-gray-600">
 										Solid - One cardinality
 									</span>
@@ -107,13 +107,13 @@ export function LegendPanel() {
 								<div className="flex items-center gap-2">
 									<div
 										className="w-8 h-0.5 relative overflow-hidden"
-										style={{ background: "#6366f1" }}
+										style={{ background: "#087895" }}
 									>
 										<div
 											className="absolute inset-0"
 											style={{
 												backgroundImage:
-													"repeating-linear-gradient(90deg, transparent, transparent 2px, #6366f1 2px, #6366f1 6px)",
+													"repeating-linear-gradient(90deg, transparent, transparent 2px, #087895 2px, #087895 6px)",
 												animation: "dash-move 0.5s linear infinite",
 											}}
 										/>
@@ -127,7 +127,7 @@ export function LegendPanel() {
 										className="w-8 h-0.5"
 										style={{
 											backgroundImage:
-												"repeating-linear-gradient(90deg, #10b981, #10b981 3px, transparent 3px, transparent 6px)",
+												"repeating-linear-gradient(90deg, #009966, #009966 3px, transparent 3px, transparent 6px)",
 										}}
 									/>
 									<span className="text-xs text-gray-600">
