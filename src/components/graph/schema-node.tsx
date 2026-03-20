@@ -9,7 +9,7 @@ import type { SchemaNodeData } from "../../utils/schema-to-flow";
 const SCHEMA_TYPE_CONFIG: Record<
 	SchemaType,
 	{
-		color: string;
+		selectedBorder: string;
 		accentBorder: string;
 		iconBg: string;
 		icon: string;
@@ -17,28 +17,28 @@ const SCHEMA_TYPE_CONFIG: Record<
 	}
 > = {
 	profile: {
-		color: "[#7F22FE]",
+		selectedBorder: "border-[#7F22FE]",
 		accentBorder: "border-t-[#7F22FE]",
 		iconBg: "bg-[#7F22FE]",
 		icon: "mdi:tune-variant",
 		label: "Profile",
 	},
 	template: {
-		color: "[#F54900]",
+		selectedBorder: "border-[#F54900]",
 		accentBorder: "border-t-[#F54900]",
 		iconBg: "bg-[#F54900]",
 		icon: "mdi:file-document-outline",
 		label: "Template",
 	},
 	generic: {
-		color: "[#009966]",
+		selectedBorder: "border-[#009966]",
 		accentBorder: "border-t-[#009966]",
 		iconBg: "bg-[#009966]",
 		icon: "mdi:shape-outline",
 		label: "Generic",
 	},
 	node: {
-		color: "[#087895]",
+		selectedBorder: "border-[#087895]",
 		accentBorder: "border-t-[#087895]",
 		iconBg: "bg-[#087895]",
 		icon: "mdi:cube-outline",
@@ -87,7 +87,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 			className={cn(
 				"bg-white rounded-lg shadow-lg border-2 min-w-[280px] max-w-[320px]",
 				"transition-all duration-200",
-				selected ? `border-${config.color}` : "border-gray-200",
+				selected ? config.selectedBorder : "border-gray-200",
 				selected && "shadow-xl",
 				"hover:shadow-xl",
 			)}
