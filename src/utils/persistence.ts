@@ -1,6 +1,5 @@
 import type { EdgeStyle } from "../components/toolbar/bottom-toolbar";
-
-const STORAGE_KEY = "schema-visualizer-state";
+import { createLocalStore } from "./local-storage";
 
 export interface NodePosition {
 	id: string;
@@ -12,51 +11,18 @@ export interface PersistedState {
 	hiddenNodes: string[];
 	edgeStyle: EdgeStyle;
 	nodePositions: NodePosition[];
-	version: number;
+	collapsedNodes: string[];
 }
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
-export function loadPersistedState(): PersistedState | null {
-	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (!stored) return null;
+export const visualizerStore = createLocalStore<PersistedState>(
+	"schema-visualizer-state",
+	CURRENT_VERSION,
+);
 
-		const parsed = JSON.parse(stored) as PersistedState;
-
-		// Reset on version mismatch - no migrations needed
-		if (parsed.version !== CURRENT_VERSION) {
-			localStorage.removeItem(STORAGE_KEY);
-			return null;
-		}
-
-		return parsed;
-	} catch {
-		// On any error, clear storage and return null
-		localStorage.removeItem(STORAGE_KEY);
-		return null;
-	}
-}
-
-export function savePersistedState(
-	state: Omit<PersistedState, "version">,
-): void {
-	try {
-		const toStore: PersistedState = {
-			...state,
-			version: CURRENT_VERSION,
-		};
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-	} catch {
-		// Silently fail if localStorage is not available
-	}
-}
-
-export function clearPersistedState(): void {
-	try {
-		localStorage.removeItem(STORAGE_KEY);
-	} catch {
-		// Silently fail if localStorage is not available
-	}
-}
-
+// Convenience aliases for backward compatibility
+export const loadPersistedState = visualizerStore.load;
+export const savePersistedState = (state: Omit<PersistedState, "version">): void =>
+	visualizerStore.save(state as PersistedState);
+export const clearPersistedState = visualizerStore.clear;

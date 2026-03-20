@@ -1,5 +1,6 @@
 import { Icon } from "@iconify-icon/react";
 import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { useCollapsedNodes } from "../../context/collapsed-nodes-context";
 import { cn } from "../../utils/cn";
 import type { SchemaNodeData } from "../../utils/schema-to-flow";
 
@@ -89,10 +90,14 @@ const getSchemaTypeLabel = (
 
 export function SchemaNode({ data, selected }: NodeProps) {
 	const nodeData = data as SchemaNodeData;
+	const { collapsedNodes, toggleCollapsed } = useCollapsedNodes();
+	const collapsed = collapsedNodes.has(nodeData.kind);
 	const hasInheritance =
 		nodeData.inheritFrom && nodeData.inheritFrom.length > 0;
 	const schemaType = nodeData.schemaType ?? "node";
 	const typeLabel = getSchemaTypeLabel(schemaType);
+	const hasContent =
+		nodeData.attributes.length > 0 || nodeData.relationships.length > 0;
 
 	return (
 		<div
@@ -105,11 +110,14 @@ export function SchemaNode({ data, selected }: NodeProps) {
 			)}
 		>
 			{/* Header */}
-			<div
+			<button
+				type="button"
 				className={cn(
-					"bg-gray-100 px-4 py-3 rounded-t-md border-t-4",
+					"bg-gray-100 px-4 py-3 border-t-4 cursor-pointer select-none w-full text-left",
 					getAccentColor(schemaType),
+					collapsed ? "rounded-md" : "rounded-t-md",
 				)}
+				onClick={() => toggleCollapsed(nodeData.kind)}
 			>
 				<div className="flex items-center gap-2">
 					<div
@@ -138,6 +146,14 @@ export function SchemaNode({ data, selected }: NodeProps) {
 						</div>
 						<p className="text-xs text-gray-500 truncate">{nodeData.kind}</p>
 					</div>
+					{hasContent && (
+						<Icon
+							icon={collapsed ? "mdi:chevron-down" : "mdi:chevron-up"}
+							width="18"
+							height="18"
+							className="text-gray-400 shrink-0"
+						/>
+					)}
 				</div>
 				{hasInheritance && (
 					<div className="mt-2 flex flex-wrap gap-1">
@@ -151,148 +167,182 @@ export function SchemaNode({ data, selected }: NodeProps) {
 						))}
 					</div>
 				)}
-			</div>
+			</button>
 
-			{/* Attributes Section */}
-			{nodeData.attributes.length > 0 && (
-				<div className="border-b border-gray-100">
-					<div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-						<h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-							Attributes ({nodeData.attributes.length})
-						</h4>
-					</div>
-					<div className="max-h-[150px] overflow-y-auto">
-						{nodeData.attributes.map((attr) => (
-							<div
-								key={attr.name}
-								className={cn(
-									"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0",
-									attr.inherited ? "bg-gray-50/50" : "",
-								)}
-							>
-								<div className="flex items-center gap-2 min-w-0 flex-1">
-									<span
-										className={cn(
-											"font-medium truncate",
-											attr.inherited ? "text-gray-400" : "text-gray-700",
-										)}
-									>
-										{attr.name}
-										{attr.optional && (
-											<span className="text-gray-400 ml-0.5">?</span>
-										)}
-									</span>
-									{attr.inherited && (
-										<span className="text-[10px] text-gray-400">
-											(inherited)
-										</span>
-									)}
-								</div>
-								<span className="text-gray-400 text-[10px] uppercase ml-2 shrink-0">
-									{attr.kind}
-								</span>
+			{/* Collapsed: render handles so edges stay connected */}
+			{collapsed &&
+				nodeData.relationships.map((rel) => (
+					<span key={rel.name} className="relative">
+						<Handle
+							type="source"
+							position={Position.Left}
+							id={`rel-${rel.name}-left`}
+							style={{
+								left: -2,
+								width: 4,
+								height: 4,
+								background: "transparent",
+								border: "none",
+							}}
+						/>
+						<Handle
+							type="source"
+							position={Position.Right}
+							id={`rel-${rel.name}-right`}
+							style={{
+								right: -2,
+								width: 4,
+								height: 4,
+								background: "transparent",
+								border: "none",
+							}}
+						/>
+					</span>
+				))}
+
+			{!collapsed && (
+				<>
+					{/* Attributes Section */}
+					{nodeData.attributes.length > 0 && (
+						<div className="border-b border-gray-100">
+							<div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+								<h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+									Attributes ({nodeData.attributes.length})
+								</h4>
 							</div>
-						))}
-					</div>
-				</div>
-			)}
-
-			{/* Relationships Section */}
-			{nodeData.relationships.length > 0 && (
-				<div>
-					<div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-						<h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-							Relationships ({nodeData.relationships.length})
-						</h4>
-					</div>
-					<div>
-						{nodeData.relationships.map((rel) => (
-							<div
-								key={rel.name}
-								className={cn(
-									"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0 relative group/rel",
-									rel.inherited ? "bg-gray-50/50" : "",
-								)}
-							>
-								{/* Left handle - invisible but functional */}
-								<Handle
-									type="source"
-									position={Position.Left}
-									id={`rel-${rel.name}-left`}
-									style={{
-										left: -2,
-										width: 4,
-										height: 4,
-										background: "transparent",
-										border: "none",
-									}}
-								/>
-								<div className="flex items-center gap-2 min-w-0 flex-1">
-									<span
+							<div className="max-h-[150px] overflow-y-auto">
+								{nodeData.attributes.map((attr) => (
+									<div
+										key={attr.name}
 										className={cn(
-											"font-medium truncate",
-											rel.inherited ? "text-gray-400" : "text-gray-700",
+											"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0",
+											attr.inherited ? "bg-gray-50/50" : "",
 										)}
 									>
-										{rel.name}
-									</span>
-									{rel.inherited && (
-										<span className="text-[10px] text-gray-400">
-											(inherited)
+										<div className="flex items-center gap-2 min-w-0 flex-1">
+											<span
+												className={cn(
+													"font-medium truncate",
+													attr.inherited ? "text-gray-400" : "text-gray-700",
+												)}
+											>
+												{attr.name}
+												{attr.optional && (
+													<span className="text-gray-400 ml-0.5">?</span>
+												)}
+											</span>
+											{attr.inherited && (
+												<span className="text-[10px] text-gray-400">
+													(inherited)
+												</span>
+											)}
+										</div>
+										<span className="text-gray-400 text-[10px] uppercase ml-2 shrink-0">
+											{attr.kind}
 										</span>
-									)}
-								</div>
-								<div className="flex items-center gap-1 ml-2 shrink-0">
-									<span
-										className={cn(
-											"px-1.5 py-0.5 rounded text-[10px]",
-											rel.cardinality === "many"
-												? "bg-purple-100 text-purple-700"
-												: "bg-blue-100 text-blue-700",
-										)}
-									>
-										{rel.cardinality}
-									</span>
-									{rel.peer === nodeData.kind ? (
-										<span
-											className="text-[10px] text-orange-500 flex items-center gap-0.5"
-											title="Self-referencing relationship"
-										>
-											<Icon icon="mdi:reload" className="text-sm" />
-											self
-										</span>
-									) : (
-										<span className="text-gray-400 text-[10px] truncate max-w-[80px]">
-											→ {rel.peer}
-										</span>
-									)}
-								</div>
-								{/* Right handle - invisible but functional */}
-								<Handle
-									type="source"
-									position={Position.Right}
-									id={`rel-${rel.name}-right`}
-									style={{
-										right: -2,
-										width: 4,
-										height: 4,
-										background: "transparent",
-										border: "none",
-									}}
-								/>
+									</div>
+								))}
 							</div>
-						))}
-					</div>
-				</div>
-			)}
+						</div>
+					)}
 
-			{/* Empty state */}
-			{nodeData.attributes.length === 0 &&
-				nodeData.relationships.length === 0 && (
-					<div className="px-4 py-6 text-center text-gray-400 text-sm">
-						No attributes or relationships
-					</div>
-				)}
+					{/* Relationships Section */}
+					{nodeData.relationships.length > 0 && (
+						<div>
+							<div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+								<h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+									Relationships ({nodeData.relationships.length})
+								</h4>
+							</div>
+							<div>
+								{nodeData.relationships.map((rel) => (
+									<div
+										key={rel.name}
+										className={cn(
+											"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0 relative group/rel",
+											rel.inherited ? "bg-gray-50/50" : "",
+										)}
+									>
+										{/* Left handle - invisible but functional */}
+										<Handle
+											type="source"
+											position={Position.Left}
+											id={`rel-${rel.name}-left`}
+											style={{
+												left: -2,
+												width: 4,
+												height: 4,
+												background: "transparent",
+												border: "none",
+											}}
+										/>
+										<div className="flex items-center gap-2 min-w-0 flex-1">
+											<span
+												className={cn(
+													"font-medium truncate",
+													rel.inherited ? "text-gray-400" : "text-gray-700",
+												)}
+											>
+												{rel.name}
+											</span>
+											{rel.inherited && (
+												<span className="text-[10px] text-gray-400">
+													(inherited)
+												</span>
+											)}
+										</div>
+										<div className="flex items-center gap-1 ml-2 shrink-0">
+											<span
+												className={cn(
+													"px-1.5 py-0.5 rounded text-[10px]",
+													rel.cardinality === "many"
+														? "bg-purple-100 text-purple-700"
+														: "bg-blue-100 text-blue-700",
+												)}
+											>
+												{rel.cardinality}
+											</span>
+											{rel.peer === nodeData.kind ? (
+												<span
+													className="text-[10px] text-orange-500 flex items-center gap-0.5"
+													title="Self-referencing relationship"
+												>
+													<Icon icon="mdi:reload" className="text-sm" />
+													self
+												</span>
+											) : (
+												<span className="text-gray-400 text-[10px] truncate max-w-[80px]">
+													→ {rel.peer}
+												</span>
+											)}
+										</div>
+										{/* Right handle - invisible but functional */}
+										<Handle
+											type="source"
+											position={Position.Right}
+											id={`rel-${rel.name}-right`}
+											style={{
+												right: -2,
+												width: 4,
+												height: 4,
+												background: "transparent",
+												border: "none",
+											}}
+										/>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+					{/* Empty state */}
+					{!hasContent && (
+						<div className="px-4 py-6 text-center text-gray-400 text-sm">
+							No attributes or relationships
+						</div>
+					)}
+				</>
+			)}
 		</div>
 	);
 }

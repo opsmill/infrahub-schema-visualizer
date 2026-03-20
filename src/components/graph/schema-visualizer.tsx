@@ -11,9 +11,10 @@ import {
 	SelectionMode,
 	useReactFlow,
 } from "@xyflow/react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
+import { CollapsedNodesContext } from "../../context/collapsed-nodes-context";
 import { exportGraph } from "../../hooks/use-export";
 import { useGraphLayout } from "../../hooks/use-graph-layout";
 import {
@@ -114,9 +115,31 @@ function SchemaVisualizerInner({
 		setHiddenNodes,
 		edgeStyle,
 		setEdgeStyle,
+		collapsedNodes,
+		setCollapsedNodes,
 		hasCustomizedView,
 		handleResetView,
 	} = useGraphLayout(data, { nodeSpacing, rowSize }, fitView);
+
+	const toggleCollapsed = useCallback(
+		(nodeId: string) => {
+			setCollapsedNodes((prev) => {
+				const next = new Set(prev);
+				if (next.has(nodeId)) {
+					next.delete(nodeId);
+				} else {
+					next.add(nodeId);
+				}
+				return next;
+			});
+		},
+		[setCollapsedNodes],
+	);
+
+	const collapsedNodesCtx = useMemo(
+		() => ({ collapsedNodes, toggleCollapsed }),
+		[collapsedNodes, toggleCollapsed],
+	);
 
 	// Derived data - React Compiler handles memoization
 	const namespaceSchemas = groupSchemasByNamespace(data);
@@ -294,6 +317,7 @@ function SchemaVisualizerInner({
 	};
 
 	return (
+		<CollapsedNodesContext value={collapsedNodesCtx}>
 		<div className={cn("w-full h-full min-h-[500px] flex", className)}>
 			<div className="relative flex-1">
 				<ReactFlow
@@ -390,6 +414,7 @@ function SchemaVisualizerInner({
 				/>
 			)}
 		</div>
+		</CollapsedNodesContext>
 	);
 }
 

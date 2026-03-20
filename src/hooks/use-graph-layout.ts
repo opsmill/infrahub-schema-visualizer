@@ -32,6 +32,13 @@ export function useGraphLayout(
 		return getDefaultHiddenNodes(data);
 	});
 
+	const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(() => {
+		if (persistedState?.collapsedNodes) {
+			return new Set(persistedState.collapsedNodes);
+		}
+		return new Set();
+	});
+
 	const [hasCustomizedView, setHasCustomizedView] = useState(
 		() => persistedState !== null,
 	);
@@ -184,13 +191,15 @@ export function useGraphLayout(
 				x: n.position.x,
 				y: n.position.y,
 			})),
+			collapsedNodes: Array.from(collapsedNodes),
 		});
 		setHasCustomizedView(true);
-	}, [hiddenNodes, edgeStyle, flowNodes]);
+	}, [hiddenNodes, edgeStyle, flowNodes, collapsedNodes]);
 
 	const handleResetView = () => {
 		const defaultHidden = getDefaultHiddenNodes(data);
 		setHiddenNodes(defaultHidden);
+		setCollapsedNodes(new Set());
 		setEdgeStyle("smoothstep");
 		clearPersistedState();
 		setHasCustomizedView(false);
@@ -213,6 +222,8 @@ export function useGraphLayout(
 		setHiddenNodes,
 		edgeStyle,
 		setEdgeStyle,
+		collapsedNodes,
+		setCollapsedNodes,
 		hasCustomizedView,
 		handleResetView,
 	};
