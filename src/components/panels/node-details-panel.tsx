@@ -1,9 +1,14 @@
 import { Icon } from "@iconify-icon/react";
-import type { NodeSchema } from "../../types/schema";
+import type {
+	GenericSchema,
+	NodeSchema,
+	ProfileSchema,
+	TemplateSchema,
+} from "../../types/schema";
 import { cn } from "../../utils/cn";
 
 export interface NodeDetailsPanelProps {
-	schema: NodeSchema | null;
+	schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema | null;
 	onClose: () => void;
 }
 
@@ -85,18 +90,20 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 						{schema.description && (
 							<PropertyRow label="Description" value={schema.description} />
 						)}
-						{schema.inherit_from && schema.inherit_from.length > 0 && (
-							<div className="flex justify-between">
-								<span className="text-gray-500">Inherit from</span>
-								<div className="flex flex-wrap justify-end gap-1">
-									{schema.inherit_from.map((k) => (
-										<Badge key={k} variant="blue">
-											{k}
-										</Badge>
-									))}
+						{"inherit_from" in schema &&
+							schema.inherit_from &&
+							schema.inherit_from.length > 0 && (
+								<div className="flex justify-between">
+									<span className="text-gray-500">Inherit from</span>
+									<div className="flex flex-wrap justify-end gap-1">
+										{schema.inherit_from.map((k: string) => (
+											<Badge key={k} variant="blue">
+												{k}
+											</Badge>
+										))}
+									</div>
 								</div>
-							</div>
-						)}
+							)}
 					</div>
 				</div>
 

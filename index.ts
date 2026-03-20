@@ -18,6 +18,7 @@ export {
 	type BottomToolbarProps,
 } from "./src/components/toolbar/bottom-toolbar";
 export { exportGraph } from "./src/hooks/use-export";
+
 // Hooks
 export { useGraphLayout } from "./src/hooks/use-graph-layout";
 export {
@@ -34,6 +35,18 @@ export {
 	getPeerKinds,
 	groupSchemasByNamespace,
 } from "./src/hooks/use-schema-data";
+
+// Store (Jotai atoms)
+export {
+	collapsedNodesAtom,
+	collapsedNodesSetAtom,
+	edgeStyleAtom,
+	hasCustomizedViewAtom,
+	hiddenNodesAtom,
+	hiddenNodesSetAtom,
+	nodePositionsAtom,
+	nodePositionsMapAtom,
+} from "./src/store/visualizer-atoms";
 
 // Types
 export type {

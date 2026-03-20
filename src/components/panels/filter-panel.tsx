@@ -1,6 +1,7 @@
 import { Icon } from "@iconify-icon/react";
 import { useState } from "react";
 import type {
+	GenericSchema,
 	NodeSchema,
 	ProfileSchema,
 	TemplateSchema,
@@ -9,8 +10,8 @@ import { cn } from "../../utils/cn";
 import { getSchemaKind } from "../../utils/schema-to-flow";
 
 export type SchemaItem = {
-	schema: NodeSchema | ProfileSchema | TemplateSchema;
-	type: "node" | "profile" | "template";
+	schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema;
+	type: "node" | "generic" | "profile" | "template";
 };
 
 export interface FilterPanelProps {
@@ -24,14 +25,18 @@ export interface FilterPanelProps {
 }
 
 // Get badge color based on schema type
-const getTypeBadgeColor = (type: "node" | "profile" | "template") => {
+const getTypeBadgeColor = (
+	type: "node" | "generic" | "profile" | "template",
+) => {
 	switch (type) {
+		case "generic":
+			return "bg-[#009966]/10 text-[#009966]";
 		case "profile":
-			return "bg-pink-100 text-pink-700";
+			return "bg-[#7F22FE]/10 text-[#7F22FE]";
 		case "template":
-			return "bg-amber-100 text-amber-700";
+			return "bg-[#F54900]/10 text-[#F54900]";
 		default:
-			return "bg-indigo-100 text-indigo-700";
+			return "bg-[#087895]/10 text-[#087895]";
 	}
 };
 

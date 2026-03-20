@@ -10,8 +10,10 @@ import {
 	ReactFlowProvider,
 	SelectionMode,
 	useReactFlow,
+	type Viewport,
 } from "@xyflow/react";
-import { useState } from "react";
+import { useAtom } from "jotai";
+import { useCallback, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { exportGraph } from "../../hooks/use-export";
@@ -29,9 +31,15 @@ import {
 	getPeerKinds,
 	groupSchemasByNamespace,
 } from "../../hooks/use-schema-data";
-import type { NodeSchema, SchemaVisualizerData } from "../../types/schema";
+import { viewportAtom } from "../../store/visualizer-atoms";
+import type {
+	GenericSchema,
+	NodeSchema,
+	ProfileSchema,
+	SchemaVisualizerData,
+	TemplateSchema,
+} from "../../types/schema";
 import { cn } from "../../utils/cn";
-import { getLayoutedElements } from "../../utils/layout";
 import { getSchemaKind } from "../../utils/schema-to-flow";
 import { EdgeContextMenu, type EdgeInfo } from "../menus/edge-context-menu";
 import { NodeContextMenu } from "../menus/node-context-menu";
@@ -61,7 +69,10 @@ export interface SchemaVisualizerProps {
 	showBackground?: boolean;
 	rowSize?: number;
 	nodeSpacing?: number;
-	onNodeClick?: (nodeId: string, schema: NodeSchema) => void;
+	onNodeClick?: (
+		nodeId: string,
+		schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema,
+	) => void;
 	defaultFilterOpen?: boolean;
 	showNodeDetails?: boolean;
 	showToolbar?: boolean;
@@ -80,7 +91,21 @@ function SchemaVisualizerInner({
 	showToolbar = true,
 	showStats = true,
 }: SchemaVisualizerProps) {
-	const { setCenter, getNode, fitView } = useReactFlow();
+	const { setCenter, getNode, getNodes, fitView } = useReactFlow();
+	const [savedViewport, setSavedViewport] = useAtom(viewportAtom);
+
+	const hasSavedViewport = savedViewport !== null;
+
+	const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const handleViewportChange = useCallback(
+		(viewport: Viewport) => {
+			if (viewportTimerRef.current) clearTimeout(viewportTimerRef.current);
+			viewportTimerRef.current = setTimeout(() => {
+				setSavedViewport(viewport);
+			}, 300);
+		},
+		[setSavedViewport],
+	);
 
 	const [isFilterOpen, setIsFilterOpen] = useState(defaultFilterOpen);
 	const [selectedNodeKind, setSelectedNodeKind] = useState<string | null>(null);
@@ -102,23 +127,24 @@ function SchemaVisualizerInner({
 		null,
 	);
 
-	// Graph layout and state
+	// Graph layout and state (backed by Jotai atoms)
 	const {
 		flowNodes,
 		flowEdges,
 		setFlowNodes,
-		setFlowEdges,
 		onNodesChange,
 		onEdgesChange,
+		persistPositions,
 		hiddenNodes,
 		setHiddenNodes,
 		edgeStyle,
 		setEdgeStyle,
 		hasCustomizedView,
 		handleResetView,
+		handleLayout,
 	} = useGraphLayout(data, { nodeSpacing, rowSize }, fitView);
 
-	// Derived data - React Compiler handles memoization
+	// Derived data
 	const namespaceSchemas = groupSchemasByNamespace(data);
 	const visibleSchemasCount = countVisibleSchemas(data, hiddenNodes);
 	const totalSchemasCount = countTotalSchemas(data);
@@ -205,30 +231,29 @@ function SchemaVisualizerInner({
 
 	const handleShowPeers = (nodeId: string) => {
 		const peerKinds = getPeerKinds(nodeId, data);
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			for (const peerKind of peerKinds) {
-				next.delete(peerKind);
-			}
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		for (const peerKind of peerKinds) {
+			next.delete(peerKind);
+		}
+		setHiddenNodes(next);
 	};
 
 	const handleHideNode = (nodeId: string) => {
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			next.add(nodeId);
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		next.add(nodeId);
+		setHiddenNodes(next);
 		setSelectedNodeKind((current) => (current === nodeId ? null : current));
 	};
 
 	const handleNodeClick = (_: React.MouseEvent, node: Node) => {
-		setSelectedNodeKind(node.id);
 		const schema = findSchemaByKind(data, node.id);
 		if (schema && onNodeClick) {
-			onNodeClick(node.id, schema as NodeSchema);
+			onNodeClick(node.id, schema);
 		}
+	};
+
+	const handleShowDetails = (nodeId: string) => {
+		setSelectedNodeKind(nodeId);
 	};
 
 	const toggleNamespace = (namespace: string) => {
@@ -236,27 +261,23 @@ function SchemaVisualizerInner({
 		const schemaKinds = nsSchemas.map((item) => getSchemaKind(item.schema));
 		const visibleCount = schemaKinds.filter((k) => !hiddenNodes.has(k)).length;
 
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			if (visibleCount > 0) {
-				for (const kind of schemaKinds) next.add(kind);
-			} else {
-				for (const kind of schemaKinds) next.delete(kind);
-			}
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		if (visibleCount > 0) {
+			for (const kind of schemaKinds) next.add(kind);
+		} else {
+			for (const kind of schemaKinds) next.delete(kind);
+		}
+		setHiddenNodes(next);
 	};
 
 	const toggleNode = (kind: string) => {
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			if (next.has(kind)) {
-				next.delete(kind);
-			} else {
-				next.add(kind);
-			}
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		if (next.has(kind)) {
+			next.delete(kind);
+		} else {
+			next.add(kind);
+		}
+		setHiddenNodes(next);
 	};
 
 	const focusNode = (kind: string) => {
@@ -269,24 +290,13 @@ function SchemaVisualizerInner({
 		}
 	};
 
-	const handleLayout = (direction: LayoutDirection) => {
-		const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-			flowNodes,
-			flowEdges,
-			{ direction },
-		);
+	const handleResetViewWithViewport = () => {
+		setSavedViewport(null);
+		handleResetView();
+	};
 
-		const edgesWithStyle = layoutedEdges.map((edge) => ({
-			...edge,
-			data: { ...edge.data, edgeStyle },
-		}));
-
-		setFlowNodes(layoutedNodes);
-		setFlowEdges(edgesWithStyle);
-
-		window.requestAnimationFrame(() => {
-			fitView({ padding: 0.2 });
-		});
+	const onLayout = (direction: LayoutDirection) => {
+		handleLayout(direction, flowNodes, flowEdges);
 	};
 
 	const handleExport = (format: ExportFormat) => {
@@ -305,16 +315,18 @@ function SchemaVisualizerInner({
 					onNodeContextMenu={handleNodeContextMenu}
 					onNodeMouseEnter={handleNodeMouseEnter}
 					onNodeMouseLeave={handleNodeMouseLeave}
+					onNodeDragStop={() => persistPositions(getNodes())}
 					onEdgeContextMenu={handleEdgeContextMenu}
 					onPaneClick={handleCloseContextMenu}
+					onViewportChange={handleViewportChange}
 					nodeTypes={nodeTypes}
 					edgeTypes={edgeTypes}
 					connectionMode={ConnectionMode.Loose}
-					fitView
+					fitView={!hasSavedViewport}
 					fitViewOptions={{ padding: 0.2 }}
 					minZoom={0.1}
 					maxZoom={1.5}
-					defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+					defaultViewport={savedViewport ?? { x: 0, y: 0, zoom: 0.5 }}
 					proOptions={{ hideAttribution: true }}
 					selectionOnDrag
 					selectionMode={SelectionMode.Partial}
@@ -339,9 +351,9 @@ function SchemaVisualizerInner({
 							isFilterOpen={isFilterOpen}
 							edgeStyle={edgeStyle}
 							onEdgeStyleChange={setEdgeStyle}
-							onLayout={handleLayout}
+							onLayout={onLayout}
 							onExport={handleExport}
-							onReset={handleResetView}
+							onReset={handleResetViewWithViewport}
 							showReset={hasCustomizedView}
 						/>
 					)}
@@ -377,6 +389,7 @@ function SchemaVisualizerInner({
 					onSelectNode={handleSelectSingleNode}
 					onShowPeers={handleShowPeers}
 					onHideNode={handleHideNode}
+					onShowDetails={handleShowDetails}
 				/>
 			)}
 

@@ -7,7 +7,7 @@ import {
 	useInternalNode,
 } from "@xyflow/react";
 
-export type EdgeStyle = "bezier" | "smoothstep";
+import type { EdgeStyle } from "../toolbar/bottom-toolbar";
 
 type NodeType = NonNullable<ReturnType<typeof useInternalNode>>;
 
