@@ -7,7 +7,10 @@ import type { SchemaVisualizerData } from "../types/schema";
 import { getLayoutedElements } from "../utils/layout";
 import { type PersistedState, visualizerStore } from "../utils/persistence";
 import { schemaToFlowFiltered } from "../utils/schema-to-flow";
-import { getDefaultHiddenNodes } from "./use-schema-data";
+import {
+	getAllSchemaKinds,
+	getDefaultHiddenNodes,
+} from "./use-schema-data";
 
 function applyEdgeStyle(edges: Edge[], edgeStyle: EdgeStyle): Edge[] {
 	return edges.map((edge) => ({
@@ -45,7 +48,7 @@ export function useGraphLayout(
 	const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(() =>
 		persistedState.current?.collapsedNodes
 			? new Set(persistedState.current.collapsedNodes)
-			: new Set(),
+			: getAllSchemaKinds(data),
 	);
 	const [hasCustomizedView, setHasCustomizedView] = useState(
 		() => persistedState.current !== null,
@@ -202,7 +205,7 @@ export function useGraphLayout(
 	const handleResetView = () => {
 		const defaultHidden = getDefaultHiddenNodes(data);
 		setHiddenNodes(defaultHidden);
-		setCollapsedNodes(new Set());
+		setCollapsedNodes(getAllSchemaKinds(data));
 		setEdgeStyle("smoothstep");
 		visualizerStore.clear();
 		setHasCustomizedView(false);

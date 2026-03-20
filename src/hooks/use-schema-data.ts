@@ -33,6 +33,23 @@ export function getDefaultHiddenNodes(data: SchemaVisualizerData): Set<string> {
 }
 
 /**
+ * Get the kind of every schema (nodes, profiles, templates).
+ */
+export function getAllSchemaKinds(data: SchemaVisualizerData): Set<string> {
+	const kinds = new Set<string>();
+	for (const node of data.nodes) {
+		kinds.add(getSchemaKind(node));
+	}
+	for (const profile of data.profiles ?? []) {
+		kinds.add(getSchemaKind(profile));
+	}
+	for (const template of data.templates ?? []) {
+		kinds.add(getSchemaKind(template));
+	}
+	return kinds;
+}
+
+/**
  * Groups all schemas (nodes, profiles, templates) by namespace.
  */
 export function groupSchemasByNamespace(
