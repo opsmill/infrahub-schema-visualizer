@@ -42,9 +42,7 @@ function buildFlowData(
 		templates: data.templates,
 	});
 
-	const nodesNeedingLayout = raw.nodes.filter(
-		(n) => !savedPositions.has(n.id),
-	);
+	const nodesNeedingLayout = raw.nodes.filter((n) => !savedPositions.has(n.id));
 
 	let nodes: Node[];
 
@@ -71,8 +69,8 @@ function buildFlowData(
 			return {
 				...node,
 				position: {
-					x: (idx % 4) * 400,
-					y: maxY + Math.floor(idx / 4) * 400,
+					x: (idx % options.rowSize) * options.nodeSpacing,
+					y: maxY + Math.floor(idx / options.rowSize) * options.nodeSpacing,
 				},
 			};
 		});
@@ -103,8 +101,9 @@ export function useGraphLayout(
 	const [, setCollapsedNodes] = useAtom(collapsedNodesSetAtom);
 	const [edgeStyle, setEdgeStyle] = useAtom(edgeStyleAtom);
 	const [savedPositions, setSavedPositions] = useAtom(nodePositionsMapAtom);
-	const [hasCustomizedView, setHasCustomizedView] =
-		useAtom(hasCustomizedViewAtom);
+	const [hasCustomizedView, setHasCustomizedView] = useAtom(
+		hasCustomizedViewAtom,
+	);
 
 	// One-time init: seed defaults when localStorage was empty
 	const didInit = useRef(false);
@@ -155,7 +154,14 @@ export function useGraphLayout(
 		}
 		setSavedPositions(positions);
 		setHasCustomizedView(true);
-	}, [flowKey, computed, setFlowNodes, setFlowEdges, setSavedPositions, setHasCustomizedView]);
+	}, [
+		flowKey,
+		computed,
+		setFlowNodes,
+		setFlowEdges,
+		setSavedPositions,
+		setHasCustomizedView,
+	]);
 
 	// Persist all current node positions to the atom (and thus localStorage)
 	const persistPositions = (nodes: Node[]) => {

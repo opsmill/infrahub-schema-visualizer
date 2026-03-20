@@ -29,7 +29,12 @@ import {
 	getPeerKinds,
 	groupSchemasByNamespace,
 } from "../../hooks/use-schema-data";
-import type { NodeSchema, SchemaVisualizerData } from "../../types/schema";
+import type {
+	NodeSchema,
+	ProfileSchema,
+	SchemaVisualizerData,
+	TemplateSchema,
+} from "../../types/schema";
 import { cn } from "../../utils/cn";
 import { getSchemaKind } from "../../utils/schema-to-flow";
 import { EdgeContextMenu, type EdgeInfo } from "../menus/edge-context-menu";
@@ -60,7 +65,10 @@ export interface SchemaVisualizerProps {
 	showBackground?: boolean;
 	rowSize?: number;
 	nodeSpacing?: number;
-	onNodeClick?: (nodeId: string, schema: NodeSchema) => void;
+	onNodeClick?: (
+		nodeId: string,
+		schema: NodeSchema | ProfileSchema | TemplateSchema,
+	) => void;
 	defaultFilterOpen?: boolean;
 	showNodeDetails?: boolean;
 	showToolbar?: boolean;
@@ -222,7 +230,7 @@ function SchemaVisualizerInner({
 	const handleNodeClick = (_: React.MouseEvent, node: Node) => {
 		const schema = findSchemaByKind(data, node.id);
 		if (schema && onNodeClick) {
-			onNodeClick(node.id, schema as NodeSchema);
+			onNodeClick(node.id, schema);
 		}
 	};
 

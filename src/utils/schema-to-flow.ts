@@ -109,30 +109,6 @@ export function schemaToFlowFiltered(
 		allVisibleKinds.add(getSchemaKind(template));
 	}
 
-	// Create a map of visible schemas to their relationships for quick lookup
-	const schemaRelationshipsMap = new Map<string, Set<string>>();
-	for (const node of visibleNodes) {
-		const relNames = new Set<string>();
-		for (const rel of node.relationships ?? []) {
-			relNames.add(rel.name);
-		}
-		schemaRelationshipsMap.set(getSchemaKind(node), relNames);
-	}
-	for (const profile of visibleProfiles) {
-		const relNames = new Set<string>();
-		for (const rel of profile.relationships ?? []) {
-			relNames.add(rel.name);
-		}
-		schemaRelationshipsMap.set(getSchemaKind(profile), relNames);
-	}
-	for (const template of visibleTemplates) {
-		const relNames = new Set<string>();
-		for (const rel of template.relationships ?? []) {
-			relNames.add(rel.name);
-		}
-		schemaRelationshipsMap.set(getSchemaKind(template), relNames);
-	}
-
 	// Create a map of generic kind -> visible nodes that inherit from it
 	const genericToInheritingNodes = new Map<string, string[]>();
 	for (const node of visibleNodes) {
@@ -158,6 +134,34 @@ export function schemaToFlowFiltered(
 		}
 	}
 
+	// Build a lookup map from kind -> schema for O(1) access in edge creation
+	const schemaByKind = new Map<
+		string,
+		NodeSchema | ProfileSchema | TemplateSchema
+	>();
+	for (const node of visibleNodes) {
+		schemaByKind.set(getSchemaKind(node), node);
+	}
+	for (const profile of visibleProfiles) {
+		schemaByKind.set(getSchemaKind(profile), profile);
+	}
+	for (const template of visibleTemplates) {
+		schemaByKind.set(getSchemaKind(template), template);
+	}
+
+	// Find the reverse relationship name from a target schema back to a source kind
+	const findTargetRelName = (
+		targetKind: string,
+		sourceKind: string,
+	): string | null => {
+		const targetSchema = schemaByKind.get(targetKind);
+		if (!targetSchema) return null;
+		const matchingRel = (targetSchema.relationships ?? []).find(
+			(r) => r.peer === sourceKind,
+		);
+		return matchingRel?.name ?? null;
+	};
+
 	// Helper function to create edges for a schema's relationships
 	const createEdgesForSchema = (
 		schema: NodeSchema | ProfileSchema | TemplateSchema,
@@ -167,29 +171,7 @@ export function schemaToFlowFiltered(
 		for (const rel of schema.relationships ?? []) {
 			// Check if the peer is a visible schema
 			if (allVisibleKinds.has(rel.peer)) {
-				// Find matching relationship on target for bidirectional connections
-				const targetRelationships = schemaRelationshipsMap.get(rel.peer);
-				// Look for a relationship on the target that points back to this schema
-				let targetRelName: string | null = null;
-				if (targetRelationships) {
-					// Find the first relationship on target that has this schema as its peer
-					const allSchemas = [
-						...visibleNodes,
-						...visibleProfiles,
-						...visibleTemplates,
-					];
-					const targetSchema = allSchemas.find(
-						(s) => getSchemaKind(s) === rel.peer,
-					);
-					if (targetSchema) {
-						const matchingRel = (targetSchema.relationships ?? []).find(
-							(r) => r.peer === kind,
-						);
-						if (matchingRel) {
-							targetRelName = matchingRel.name;
-						}
-					}
-				}
+				const targetRelName = findTargetRelName(rel.peer, kind);
 
 				edges.push({
 					id: `${kind}-${rel.name}-${rel.peer}`,
@@ -200,8 +182,8 @@ export function schemaToFlowFiltered(
 					data: {
 						sourceRelName: rel.name,
 						targetRelName,
-						sourceCardinality: "one", // Source side is always "one" from this node's perspective
-						targetCardinality: rel.cardinality, // The cardinality defined on this relationship
+						sourceCardinality: "one",
+						targetCardinality: rel.cardinality,
 					},
 					style: {
 						stroke: rel.inherited ? "#009966" : getEdgeColorForType(schemaType),
@@ -213,24 +195,7 @@ export function schemaToFlowFiltered(
 			else if (genericsMap.has(rel.peer)) {
 				const inheritingSchemas = genericToInheritingNodes.get(rel.peer) ?? [];
 				for (const inheritingSchemaKind of inheritingSchemas) {
-					// Find matching relationship on target for bidirectional connections
-					let targetRelName: string | null = null;
-					const allSchemas = [
-						...visibleNodes,
-						...visibleProfiles,
-						...visibleTemplates,
-					];
-					const targetSchema = allSchemas.find(
-						(s) => getSchemaKind(s) === inheritingSchemaKind,
-					);
-					if (targetSchema) {
-						const matchingRel = (targetSchema.relationships ?? []).find(
-							(r) => r.peer === kind,
-						);
-						if (matchingRel) {
-							targetRelName = matchingRel.name;
-						}
-					}
+					const targetRelName = findTargetRelName(inheritingSchemaKind, kind);
 
 					edges.push({
 						id: `${kind}-${rel.name}-${inheritingSchemaKind}`,
@@ -245,9 +210,9 @@ export function schemaToFlowFiltered(
 							targetCardinality: rel.cardinality,
 						},
 						style: {
-							stroke: "#009966", // Green for generic-inherited relationships
+							stroke: "#009966",
 							strokeWidth: 2,
-							strokeDasharray: "5,5", // Dashed line for inherited
+							strokeDasharray: "5,5",
 						},
 					});
 				}

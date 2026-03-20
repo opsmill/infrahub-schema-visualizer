@@ -65,7 +65,10 @@ export function NodeContextMenu({
 				onClick={handleShowDetails}
 				className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
 			>
-				<Icon icon="mdi:information-outline" className="text-lg text-gray-500" />
+				<Icon
+					icon="mdi:information-outline"
+					className="text-lg text-gray-500"
+				/>
 				Show details
 			</button>
 			<div className="my-1 border-t border-gray-100" />

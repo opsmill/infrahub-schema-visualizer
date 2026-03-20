@@ -80,8 +80,7 @@ export const hiddenNodesSetAtom = atom(
 
 export const collapsedNodesSetAtom = atom(
 	(get) => new Set(get(collapsedNodesAtom)),
-	(_get, set, next: Set<string>) =>
-		set(collapsedNodesAtom, Array.from(next)),
+	(_get, set, next: Set<string>) => set(collapsedNodesAtom, Array.from(next)),
 );
 
 export const nodePositionsMapAtom = atom(

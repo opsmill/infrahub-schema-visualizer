@@ -7,7 +7,10 @@ export function exportGraph(flowNodes: Node[], format: ExportFormat) {
 	const viewport = document.querySelector(
 		".react-flow__viewport",
 	) as HTMLElement;
-	if (!viewport) return;
+	if (!viewport) {
+		console.warn("exportGraph: could not find .react-flow__viewport element");
+		return;
+	}
 
 	const nodesBounds = getNodesBounds(flowNodes);
 	const padding = 50;
