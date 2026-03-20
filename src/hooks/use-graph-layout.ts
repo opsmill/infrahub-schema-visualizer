@@ -57,8 +57,14 @@ export function useGraphLayout(
 		new Map(),
 	);
 
-	// Convert schema to flow data
-	const flowData = schemaToFlowFiltered(
+	// Convert schema to flow data — store in ref to avoid unstable object identity
+	const flowDataRef = useRef<{ nodes: Node[]; edges: Edge[] }>({
+		nodes: [],
+		edges: [],
+	});
+	const prevFlowKeyRef = useRef("");
+
+	const nextFlowData = schemaToFlowFiltered(
 		data.nodes,
 		data.generics,
 		hiddenNodes,
@@ -69,6 +75,19 @@ export function useGraphLayout(
 			templates: data.templates,
 		},
 	);
+
+	// Derive a stable key from node/edge IDs to detect real changes
+	const nextFlowKey = [
+		nextFlowData.nodes.map((n) => n.id).join(","),
+		nextFlowData.edges.map((e) => e.id).join(","),
+	].join("|");
+
+	if (nextFlowKey !== prevFlowKeyRef.current) {
+		flowDataRef.current = nextFlowData;
+		prevFlowKeyRef.current = nextFlowKey;
+	}
+
+	const flowData = flowDataRef.current;
 
 	const [flowNodes, setFlowNodes, onNodesChangeInternal] = useNodesState<Node>(
 		[],
