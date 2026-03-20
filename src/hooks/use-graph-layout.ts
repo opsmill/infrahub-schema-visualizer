@@ -65,15 +65,22 @@ export function useGraphLayout(
 		},
 	);
 
-	const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node>([]);
+	const [flowNodes, setFlowNodes, onNodesChangeInternal] = useNodesState<Node>(
+		[],
+	);
 	const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-	// Update positions ref whenever flowNodes change
-	useEffect(() => {
-		for (const node of flowNodes) {
-			currentPositionsRef.current.set(node.id, { ...node.position });
+	// Track positions on every node change (drag, programmatic update)
+	const onNodesChange = (
+		changes: Parameters<typeof onNodesChangeInternal>[0],
+	) => {
+		onNodesChangeInternal(changes);
+		for (const change of changes) {
+			if (change.type === "position" && change.position) {
+				currentPositionsRef.current.set(change.id, { ...change.position });
+			}
 		}
-	}, [flowNodes]);
+	};
 
 	// Layout logic
 	useEffect(() => {
@@ -159,6 +166,11 @@ export function useGraphLayout(
 		}
 
 		setFlowNodes(finalNodes);
+
+		// Seed position ref so onNodesChange has correct initial state
+		for (const node of finalNodes) {
+			currentPositionsRef.current.set(node.id, { ...node.position });
+		}
 	}, [flowData, edgeStyle, setFlowNodes, setFlowEdges, savedNodePositions]);
 
 	// Persist state

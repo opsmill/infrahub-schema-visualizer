@@ -1,5 +1,6 @@
 import { Icon } from "@iconify-icon/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useDismiss } from "../../hooks/use-dismiss";
 
 export interface NodeContextMenuProps {
 	nodeId: string;
@@ -24,47 +25,27 @@ export function NodeContextMenu({
 }: NodeContextMenuProps) {
 	const menuRef = useRef<HTMLDivElement>(null);
 
-	// Close menu when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-				onClose();
-			}
-		};
+	useDismiss(menuRef, onClose);
 
-		const handleEscape = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				onClose();
-			}
-		};
-
-		document.addEventListener("mousedown", handleClickOutside);
-		document.addEventListener("keydown", handleEscape);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-			document.removeEventListener("keydown", handleEscape);
-		};
-	}, [onClose]);
-
-	const handleSelectConnected = useCallback(() => {
+	const handleSelectConnected = () => {
 		onSelectConnected(nodeId);
 		onClose();
-	}, [nodeId, onSelectConnected, onClose]);
+	};
 
-	const handleSelectNode = useCallback(() => {
+	const handleSelectNode = () => {
 		onSelectNode(nodeId);
 		onClose();
-	}, [nodeId, onSelectNode, onClose]);
+	};
 
-	const handleShowPeers = useCallback(() => {
+	const handleShowPeers = () => {
 		onShowPeers(nodeId);
 		onClose();
-	}, [nodeId, onShowPeers, onClose]);
+	};
 
-	const handleHideNode = useCallback(() => {
+	const handleHideNode = () => {
 		onHideNode(nodeId);
 		onClose();
-	}, [nodeId, onHideNode, onClose]);
+	};
 
 	return (
 		<div

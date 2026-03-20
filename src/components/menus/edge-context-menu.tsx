@@ -1,5 +1,6 @@
 import { Icon } from "@iconify-icon/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useDismiss } from "../../hooks/use-dismiss";
 
 export interface EdgeInfo {
 	id: string;
@@ -28,34 +29,14 @@ export function EdgeContextMenu({
 	const menuRef = useRef<HTMLDivElement>(null);
 	const [copied, setCopied] = useState(false);
 
-	// Close menu when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-				onClose();
-			}
-		};
+	useDismiss(menuRef, onClose);
 
-		const handleEscape = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				onClose();
-			}
-		};
-
-		document.addEventListener("mousedown", handleClickOutside);
-		document.addEventListener("keydown", handleEscape);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-			document.removeEventListener("keydown", handleEscape);
-		};
-	}, [onClose]);
-
-	const handleHighlight = useCallback(() => {
+	const handleHighlight = () => {
 		onHighlight(edge.id);
 		onClose();
-	}, [edge.id, onHighlight, onClose]);
+	};
 
-	const handleCopyInfo = useCallback(async () => {
+	const handleCopyInfo = async () => {
 		const info = [
 			`Relationship: ${edge.sourceRelName}`,
 			`From: ${edge.source}`,
@@ -91,7 +72,7 @@ export function EdgeContextMenu({
 			// Still show feedback even if copy failed
 			onClose();
 		}
-	}, [edge, onClose]);
+	};
 
 	return (
 		<div
