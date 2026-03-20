@@ -247,11 +247,14 @@ function SchemaVisualizerInner({
 	};
 
 	const handleNodeClick = (_: React.MouseEvent, node: Node) => {
-		setSelectedNodeKind(node.id);
 		const schema = findSchemaByKind(data, node.id);
 		if (schema && onNodeClick) {
 			onNodeClick(node.id, schema as NodeSchema);
 		}
+	};
+
+	const handleShowDetails = (nodeId: string) => {
+		setSelectedNodeKind(nodeId);
 	};
 
 	const toggleNamespace = (namespace: string) => {
@@ -401,6 +404,7 @@ function SchemaVisualizerInner({
 					onSelectNode={handleSelectSingleNode}
 					onShowPeers={handleShowPeers}
 					onHideNode={handleHideNode}
+					onShowDetails={handleShowDetails}
 				/>
 			)}
 
