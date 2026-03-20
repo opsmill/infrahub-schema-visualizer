@@ -1,6 +1,5 @@
 import { Icon } from "@iconify-icon/react";
 import { Handle, type NodeProps, Position } from "@xyflow/react";
-import { memo } from "react";
 import { cn } from "../../utils/cn";
 import type { SchemaNodeData } from "../../utils/schema-to-flow";
 
@@ -56,10 +55,7 @@ const getSchemaTypeLabel = (
 	}
 };
 
-export const SchemaNode = memo(function SchemaNode({
-	data,
-	selected,
-}: NodeProps) {
+export function SchemaNode({ data, selected }: NodeProps) {
 	const nodeData = data as SchemaNodeData;
 	const hasInheritance =
 		nodeData.inheritFrom && nodeData.inheritFrom.length > 0;
@@ -257,4 +253,4 @@ export const SchemaNode = memo(function SchemaNode({
 				)}
 		</div>
 	);
-});
+}

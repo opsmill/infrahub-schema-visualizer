@@ -1,4 +1,4 @@
-import type { EdgeStyle } from "../components/bottom-toolbar";
+import type { EdgeStyle } from "../components/toolbar/bottom-toolbar";
 
 const STORAGE_KEY = "schema-visualizer-state";
 
@@ -60,10 +60,3 @@ export function clearPersistedState(): void {
 	}
 }
 
-export function hasPersistedState(): boolean {
-	try {
-		return localStorage.getItem(STORAGE_KEY) !== null;
-	} catch {
-		return false;
-	}
-}

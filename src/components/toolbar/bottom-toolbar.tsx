@@ -1,6 +1,7 @@
 import { Icon } from "@iconify-icon/react";
 import { Panel, useReactFlow } from "@xyflow/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useDismiss } from "../../hooks/use-dismiss";
 import { cn } from "../../utils/cn";
 
 export type EdgeStyle = "bezier" | "smoothstep";
@@ -32,32 +33,13 @@ export function BottomToolbar({
 	const [exportMenuOpen, setExportMenuOpen] = useState(false);
 	const exportMenuRef = useRef<HTMLDivElement>(null);
 
-	const handleExport = useCallback(
-		(format: ExportFormat) => {
-			onExport(format);
-			setExportMenuOpen(false);
-		},
-		[onExport],
-	);
+	const handleExport = (format: ExportFormat) => {
+		onExport(format);
+		setExportMenuOpen(false);
+	};
 
-	// Close export menu when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				exportMenuRef.current &&
-				!exportMenuRef.current.contains(event.target as Node)
-			) {
-				setExportMenuOpen(false);
-			}
-		};
-
-		if (exportMenuOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-			return () => {
-				document.removeEventListener("mousedown", handleClickOutside);
-			};
-		}
-	}, [exportMenuOpen]);
+	const closeExportMenu = () => setExportMenuOpen(false);
+	useDismiss(exportMenuRef, closeExportMenu, exportMenuOpen);
 
 	return (
 		<Panel

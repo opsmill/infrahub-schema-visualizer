@@ -1,5 +1,5 @@
 import { Icon } from "@iconify-icon/react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import type {
 	NodeSchema,
 	ProfileSchema,
@@ -62,53 +62,27 @@ export function FilterPanel({
 	};
 
 	const namespaces = Array.from(namespaceSchemas.keys()).sort();
+	const term = searchTerm.toLowerCase().trim();
 
-	// Filter namespaces and schemas based on search term
-	const filteredNamespaces = useMemo(() => {
-		if (!searchTerm.trim()) {
-			return namespaces;
-		}
-		const term = searchTerm.toLowerCase().trim();
-		return namespaces.filter((namespace) => {
-			// Check if namespace matches
-			if (namespace.toLowerCase().includes(term)) {
-				return true;
-			}
-			// Check if any schema in namespace matches
-			const nsSchemas = namespaceSchemas.get(namespace) ?? [];
-			return nsSchemas.some(
-				(item) =>
-					item.schema.name.toLowerCase().includes(term) ||
-					(item.schema.label?.toLowerCase().includes(term) ?? false) ||
-					(item.schema.kind?.toLowerCase().includes(term) ?? false) ||
-					item.type.toLowerCase().includes(term),
-			);
-		});
-	}, [namespaces, namespaceSchemas, searchTerm]);
+	const matchesSearch = (item: SchemaItem) =>
+		item.schema.name.toLowerCase().includes(term) ||
+		(item.schema.label?.toLowerCase().includes(term) ?? false) ||
+		(item.schema.kind?.toLowerCase().includes(term) ?? false) ||
+		item.type.toLowerCase().includes(term);
 
-	// Get filtered schemas for a namespace
-	const getFilteredSchemas = useCallback(
-		(namespace: string) => {
-			const nsSchemas = namespaceSchemas.get(namespace) ?? [];
-			if (!searchTerm.trim()) {
-				return nsSchemas;
-			}
-			const term = searchTerm.toLowerCase().trim();
-			// If namespace matches, show all schemas
-			if (namespace.toLowerCase().includes(term)) {
-				return nsSchemas;
-			}
-			// Otherwise filter schemas
-			return nsSchemas.filter(
-				(item) =>
-					item.schema.name.toLowerCase().includes(term) ||
-					(item.schema.label?.toLowerCase().includes(term) ?? false) ||
-					(item.schema.kind?.toLowerCase().includes(term) ?? false) ||
-					item.type.toLowerCase().includes(term),
-			);
-		},
-		[namespaceSchemas, searchTerm],
-	);
+	const filteredNamespaces = term
+		? namespaces.filter(
+				(ns) =>
+					ns.toLowerCase().includes(term) ||
+					(namespaceSchemas.get(ns) ?? []).some(matchesSearch),
+			)
+		: namespaces;
+
+	const getFilteredSchemas = (namespace: string) => {
+		const nsSchemas = namespaceSchemas.get(namespace) ?? [];
+		if (!term || namespace.toLowerCase().includes(term)) return nsSchemas;
+		return nsSchemas.filter(matchesSearch);
+	};
 
 	return (
 		<div className="flex h-full w-80 flex-col border-gray-200 border-l bg-white">
