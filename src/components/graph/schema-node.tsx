@@ -3,19 +3,51 @@ import { Handle, type NodeProps, Position } from "@xyflow/react";
 import { cn } from "../../utils/cn";
 import type { SchemaNodeData } from "../../utils/schema-to-flow";
 
-// Get header colors based on schema type
-const getHeaderColors = (
+// Get accent color based on schema type
+const getAccentColor = (
 	schemaType: "node" | "generic" | "profile" | "template",
 ) => {
 	switch (schemaType) {
 		case "profile":
-			return "from-pink-500 to-pink-600";
+			return "border-t-pink-500";
 		case "template":
-			return "from-amber-500 to-amber-600";
+			return "border-t-amber-500";
 		case "generic":
-			return "from-emerald-500 to-emerald-600";
+			return "border-t-emerald-500";
 		default:
-			return "from-indigo-500 to-indigo-600";
+			return "border-t-indigo-500";
+	}
+};
+
+// Get icon background color based on schema type (matches border-top color)
+const getIconBgColor = (
+	schemaType: "node" | "generic" | "profile" | "template",
+) => {
+	switch (schemaType) {
+		case "profile":
+			return "bg-pink-500";
+		case "template":
+			return "bg-amber-500";
+		case "generic":
+			return "bg-emerald-500";
+		default:
+			return "bg-indigo-500";
+	}
+};
+
+// Get default icon based on schema type
+const getDefaultIcon = (
+	schemaType: "node" | "generic" | "profile" | "template",
+) => {
+	switch (schemaType) {
+		case "profile":
+			return "mdi:tune-variant";
+		case "template":
+			return "mdi:file-document-outline";
+		case "generic":
+			return "mdi:shape-outline";
+		default:
+			return "mdi:cube-outline";
 	}
 };
 
@@ -75,26 +107,36 @@ export function SchemaNode({ data, selected }: NodeProps) {
 			{/* Header */}
 			<div
 				className={cn(
-					"bg-gradient-to-r text-white px-4 py-3 rounded-t-md",
-					getHeaderColors(schemaType),
+					"bg-gray-100 px-4 py-3 rounded-t-md border-t-4",
+					getAccentColor(schemaType),
 				)}
 			>
 				<div className="flex items-center gap-2">
-					{nodeData.icon && (
-						<Icon icon={nodeData.icon} className="text-2xl opacity-90" />
-					)}
+					<div
+						className={cn(
+							"w-8 h-8 rounded-md flex items-center justify-center shrink-0",
+							getIconBgColor(schemaType),
+						)}
+					>
+						<Icon
+							icon={nodeData.icon || getDefaultIcon(schemaType)}
+							width="20"
+							height="20"
+							className="text-white"
+						/>
+					</div>
 					<div className="flex-1 min-w-0">
 						<div className="flex items-center gap-2">
-							<h3 className="font-semibold text-sm truncate">
+							<h3 className="font-semibold text-sm truncate text-gray-900">
 								{nodeData.label}
 							</h3>
 							{typeLabel && (
-								<span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded">
+								<span className="px-1.5 py-0.5 text-[10px] bg-gray-300/50 text-gray-600 rounded">
 									{typeLabel}
 								</span>
 							)}
 						</div>
-						<p className="text-xs opacity-70 truncate">{nodeData.kind}</p>
+						<p className="text-xs text-gray-500 truncate">{nodeData.kind}</p>
 					</div>
 				</div>
 				{hasInheritance && (
@@ -102,7 +144,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 						{nodeData.inheritFrom?.map((generic) => (
 							<span
 								key={generic}
-								className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-indigo-400/30 text-indigo-100"
+								className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-200 text-gray-600"
 							>
 								↑ {generic}
 							</span>
