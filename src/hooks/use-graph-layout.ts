@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 
 import type { EdgeStyle } from "../components/toolbar/bottom-toolbar";
 import {
+	clearAllStorage,
 	collapsedNodesSetAtom,
 	edgeStyleAtom,
 	hasCustomizedViewAtom,
@@ -139,14 +140,22 @@ export function useGraphLayout(
 	);
 
 	// Sync computed data → ReactFlow when filters/edge style change.
-	// Single useEffect, guarded by flowKey to prevent redundant updates.
-	const prevFlowKeyRef = useRef(flowKey);
+	// Also persists positions so they survive reload.
+	// Guarded by flowKey — safe because flowKey is derived from IDs + edgeStyle, not positions.
+	const prevFlowKeyRef = useRef("");
 	useEffect(() => {
 		if (flowKey === prevFlowKeyRef.current) return;
 		prevFlowKeyRef.current = flowKey;
 		setFlowNodes(computed.nodes);
 		setFlowEdges(computed.edges);
-	}, [flowKey, computed, setFlowNodes, setFlowEdges]);
+
+		const positions = new Map<string, { x: number; y: number }>();
+		for (const n of computed.nodes) {
+			positions.set(n.id, { x: n.position.x, y: n.position.y });
+		}
+		setSavedPositions(positions);
+		setHasCustomizedView(true);
+	}, [flowKey, computed, setFlowNodes, setFlowEdges, setSavedPositions, setHasCustomizedView]);
 
 	// Persist all current node positions to the atom (and thus localStorage)
 	const persistPositions = (nodes: Node[]) => {
@@ -186,6 +195,7 @@ export function useGraphLayout(
 	};
 
 	const handleResetView = () => {
+		clearAllStorage();
 		setHiddenNodes(getDefaultHiddenNodes(data));
 		setCollapsedNodes(getAllSchemaKinds(data));
 		setEdgeStyle("smoothstep");

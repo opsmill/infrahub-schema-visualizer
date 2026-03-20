@@ -1,37 +1,77 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 
 import type { EdgeStyle } from "../components/toolbar/bottom-toolbar";
 
-// ─── Persisted atoms (auto-sync to localStorage) ────────────────────────
+// ─── localStorage helpers ───────────────────────────────────────────────
 
 const STORAGE_PREFIX = "schema-visualizer";
 
-export const hiddenNodesAtom = atomWithStorage<string[]>(
-	`${STORAGE_PREFIX}:hiddenNodes`,
+function loadFromStorage<T>(key: string, fallback: T): T {
+	try {
+		const raw = localStorage.getItem(`${STORAGE_PREFIX}:${key}`);
+		if (raw === null) return fallback;
+		return JSON.parse(raw) as T;
+	} catch {
+		return fallback;
+	}
+}
+
+function saveToStorage<T>(key: string, value: T): void {
+	try {
+		localStorage.setItem(`${STORAGE_PREFIX}:${key}`, JSON.stringify(value));
+	} catch {
+		// silently fail
+	}
+}
+
+function removeFromStorage(key: string): void {
+	try {
+		localStorage.removeItem(`${STORAGE_PREFIX}:${key}`);
+	} catch {
+		// silently fail
+	}
+}
+
+// ─── Helper: create an atom that syncs writes to localStorage ───────────
+
+function atomWithLocalStorage<T>(key: string, fallback: T) {
+	const base = atom<T>(loadFromStorage(key, fallback));
+	return atom(
+		(get) => get(base),
+		(_get, set, next: T) => {
+			set(base, next);
+			saveToStorage(key, next);
+		},
+	);
+}
+
+// ─── Persisted atoms (sync read from localStorage on init) ──────────────
+
+export const hiddenNodesAtom = atomWithLocalStorage<string[]>(
+	"hiddenNodes",
 	[],
 );
 
-export const collapsedNodesAtom = atomWithStorage<string[]>(
-	`${STORAGE_PREFIX}:collapsedNodes`,
+export const collapsedNodesAtom = atomWithLocalStorage<string[]>(
+	"collapsedNodes",
 	[],
 );
 
-export const edgeStyleAtom = atomWithStorage<EdgeStyle>(
-	`${STORAGE_PREFIX}:edgeStyle`,
+export const edgeStyleAtom = atomWithLocalStorage<EdgeStyle>(
+	"edgeStyle",
 	"smoothstep",
 );
 
-export const nodePositionsAtom = atomWithStorage<
+export const nodePositionsAtom = atomWithLocalStorage<
 	Record<string, { x: number; y: number }>
->(`${STORAGE_PREFIX}:nodePositions`, {});
+>("nodePositions", {});
 
-export const hasCustomizedViewAtom = atomWithStorage<boolean>(
-	`${STORAGE_PREFIX}:hasCustomizedView`,
+export const hasCustomizedViewAtom = atomWithLocalStorage<boolean>(
+	"hasCustomizedView",
 	false,
 );
 
-// ─── Convenience derived atoms (Set wrappers) ───────────────────────────
+// ─── Convenience derived atoms (Set/Map wrappers) ───────────────────────
 
 export const hiddenNodesSetAtom = atom(
 	(get) => new Set(get(hiddenNodesAtom)),
@@ -53,3 +93,11 @@ export const nodePositionsMapAtom = atom(
 		set(nodePositionsAtom, Object.fromEntries(next));
 	},
 );
+
+export function clearAllStorage(): void {
+	removeFromStorage("hiddenNodes");
+	removeFromStorage("collapsedNodes");
+	removeFromStorage("edgeStyle");
+	removeFromStorage("nodePositions");
+	removeFromStorage("hasCustomizedView");
+}
