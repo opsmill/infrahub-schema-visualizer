@@ -10,8 +10,10 @@ import {
 	ReactFlowProvider,
 	SelectionMode,
 	useReactFlow,
+	type Viewport,
 } from "@xyflow/react";
-import { useState } from "react";
+import { useAtom } from "jotai";
+import { useCallback, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { exportGraph } from "../../hooks/use-export";
@@ -29,6 +31,7 @@ import {
 	getPeerKinds,
 	groupSchemasByNamespace,
 } from "../../hooks/use-schema-data";
+import { viewportAtom } from "../../store/visualizer-atoms";
 import type {
 	NodeSchema,
 	ProfileSchema,
@@ -88,6 +91,20 @@ function SchemaVisualizerInner({
 	showStats = true,
 }: SchemaVisualizerProps) {
 	const { setCenter, getNode, getNodes, fitView } = useReactFlow();
+	const [savedViewport, setSavedViewport] = useAtom(viewportAtom);
+
+	const hasSavedViewport = savedViewport !== null;
+
+	const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const handleViewportChange = useCallback(
+		(viewport: Viewport) => {
+			if (viewportTimerRef.current) clearTimeout(viewportTimerRef.current);
+			viewportTimerRef.current = setTimeout(() => {
+				setSavedViewport(viewport);
+			}, 300);
+		},
+		[setSavedViewport],
+	);
 
 	const [isFilterOpen, setIsFilterOpen] = useState(defaultFilterOpen);
 	const [selectedNodeKind, setSelectedNodeKind] = useState<string | null>(null);
@@ -272,6 +289,11 @@ function SchemaVisualizerInner({
 		}
 	};
 
+	const handleResetViewWithViewport = () => {
+		setSavedViewport(null);
+		handleResetView();
+	};
+
 	const onLayout = (direction: LayoutDirection) => {
 		handleLayout(direction, flowNodes, flowEdges);
 	};
@@ -295,14 +317,15 @@ function SchemaVisualizerInner({
 					onNodeDragStop={() => persistPositions(getNodes())}
 					onEdgeContextMenu={handleEdgeContextMenu}
 					onPaneClick={handleCloseContextMenu}
+					onViewportChange={handleViewportChange}
 					nodeTypes={nodeTypes}
 					edgeTypes={edgeTypes}
 					connectionMode={ConnectionMode.Loose}
-					fitView
+					fitView={!hasSavedViewport}
 					fitViewOptions={{ padding: 0.2 }}
 					minZoom={0.1}
 					maxZoom={1.5}
-					defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+					defaultViewport={savedViewport ?? { x: 0, y: 0, zoom: 0.5 }}
 					proOptions={{ hideAttribution: true }}
 					selectionOnDrag
 					selectionMode={SelectionMode.Partial}
@@ -329,7 +352,7 @@ function SchemaVisualizerInner({
 							onEdgeStyleChange={setEdgeStyle}
 							onLayout={onLayout}
 							onExport={handleExport}
-							onReset={handleResetView}
+							onReset={handleResetViewWithViewport}
 							showReset={hasCustomizedView}
 						/>
 					)}

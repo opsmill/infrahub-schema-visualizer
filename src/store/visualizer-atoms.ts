@@ -71,6 +71,12 @@ export const hasCustomizedViewAtom = atomWithLocalStorage<boolean>(
 	false,
 );
 
+export const viewportAtom = atomWithLocalStorage<{
+	x: number;
+	y: number;
+	zoom: number;
+} | null>("viewport", null);
+
 // ─── Convenience derived atoms (Set/Map wrappers) ───────────────────────
 
 export const hiddenNodesSetAtom = atom(
@@ -99,4 +105,5 @@ export function clearAllStorage(): void {
 	removeFromStorage("edgeStyle");
 	removeFromStorage("nodePositions");
 	removeFromStorage("hasCustomizedView");
+	removeFromStorage("viewport");
 }
