@@ -1,5 +1,6 @@
 import { Icon } from "@iconify-icon/react";
 import type {
+	GenericSchema,
 	NodeSchema,
 	ProfileSchema,
 	TemplateSchema,
@@ -7,7 +8,7 @@ import type {
 import { cn } from "../../utils/cn";
 
 export interface NodeDetailsPanelProps {
-	schema: NodeSchema | ProfileSchema | TemplateSchema | null;
+	schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema | null;
 	onClose: () => void;
 }
 

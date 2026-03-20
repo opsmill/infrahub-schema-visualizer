@@ -33,6 +33,7 @@ import {
 } from "../../hooks/use-schema-data";
 import { viewportAtom } from "../../store/visualizer-atoms";
 import type {
+	GenericSchema,
 	NodeSchema,
 	ProfileSchema,
 	SchemaVisualizerData,
@@ -70,7 +71,7 @@ export interface SchemaVisualizerProps {
 	nodeSpacing?: number;
 	onNodeClick?: (
 		nodeId: string,
-		schema: NodeSchema | ProfileSchema | TemplateSchema,
+		schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema,
 	) => void;
 	defaultFilterOpen?: boolean;
 	showNodeDetails?: boolean;

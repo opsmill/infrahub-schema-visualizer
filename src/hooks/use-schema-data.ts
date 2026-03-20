@@ -1,4 +1,5 @@
 import type {
+	GenericSchema,
 	NodeSchema,
 	ProfileSchema,
 	SchemaVisualizerData,
@@ -7,8 +8,8 @@ import type {
 import { getSchemaKind } from "../utils/schema-to-flow";
 
 type SchemaItem = {
-	schema: NodeSchema | ProfileSchema | TemplateSchema;
-	type: "node" | "profile" | "template";
+	schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema;
+	type: "node" | "generic" | "profile" | "template";
 };
 
 /**
@@ -21,6 +22,11 @@ export function getDefaultHiddenNodes(data: SchemaVisualizerData): Set<string> {
 	for (const node of data.nodes) {
 		if (hiddenNamespaces.includes(node.namespace)) {
 			hidden.add(getSchemaKind(node));
+		}
+	}
+	for (const generic of data.generics) {
+		if (hiddenNamespaces.includes(generic.namespace)) {
+			hidden.add(getSchemaKind(generic));
 		}
 	}
 	for (const profile of data.profiles ?? []) {
@@ -39,6 +45,9 @@ export function getAllSchemaKinds(data: SchemaVisualizerData): Set<string> {
 	const kinds = new Set<string>();
 	for (const node of data.nodes) {
 		kinds.add(getSchemaKind(node));
+	}
+	for (const generic of data.generics) {
+		kinds.add(getSchemaKind(generic));
 	}
 	for (const profile of data.profiles ?? []) {
 		kinds.add(getSchemaKind(profile));
@@ -61,6 +70,12 @@ export function groupSchemasByNamespace(
 			groups.set(node.namespace, []);
 		}
 		groups.get(node.namespace)?.push({ schema: node, type: "node" });
+	}
+	for (const generic of data.generics) {
+		if (!groups.has(generic.namespace)) {
+			groups.set(generic.namespace, []);
+		}
+		groups.get(generic.namespace)?.push({ schema: generic, type: "generic" });
 	}
 	for (const profile of data.profiles ?? []) {
 		if (!groups.has(profile.namespace)) {
@@ -90,6 +105,9 @@ export function countVisibleSchemas(
 	count += data.nodes.filter(
 		(node) => !hiddenNodes.has(getSchemaKind(node)),
 	).length;
+	count += data.generics.filter(
+		(generic) => !hiddenNodes.has(getSchemaKind(generic)),
+	).length;
 	count += (data.profiles ?? []).filter(
 		(profile) => !hiddenNodes.has(getSchemaKind(profile)),
 	).length;
@@ -105,6 +123,7 @@ export function countVisibleSchemas(
 export function countTotalSchemas(data: SchemaVisualizerData): number {
 	return (
 		data.nodes.length +
+		data.generics.length +
 		(data.profiles?.length ?? 0) +
 		(data.templates?.length ?? 0)
 	);
@@ -116,9 +135,11 @@ export function countTotalSchemas(data: SchemaVisualizerData): number {
 export function findSchemaByKind(
 	data: SchemaVisualizerData,
 	kind: string,
-): NodeSchema | ProfileSchema | TemplateSchema | null {
+): NodeSchema | GenericSchema | ProfileSchema | TemplateSchema | null {
 	const node = data.nodes.find((n) => getSchemaKind(n) === kind);
 	if (node) return node;
+	const generic = data.generics.find((g) => getSchemaKind(g) === kind);
+	if (generic) return generic;
 	const profile = (data.profiles ?? []).find((p) => getSchemaKind(p) === kind);
 	if (profile) return profile;
 	const template = (data.templates ?? []).find(
@@ -139,7 +160,7 @@ export function getPeerKinds(
 	const peers = new Set<string>();
 
 	const addPeersFromSchema = (
-		schema: NodeSchema | ProfileSchema | TemplateSchema,
+		schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema,
 	) => {
 		for (const rel of schema.relationships ?? []) {
 			peers.add(rel.peer);

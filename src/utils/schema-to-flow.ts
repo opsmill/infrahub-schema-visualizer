@@ -85,6 +85,12 @@ export function schemaToFlowFiltered(
 		return !hiddenNodes.has(kind);
 	});
 
+	// Filter generics based on visibility
+	const visibleGenerics = generics.filter((generic) => {
+		const kind = getSchemaKind(generic);
+		return !hiddenNodes.has(kind);
+	});
+
 	// Filter profiles based on visibility
 	const visibleProfiles = profiles.filter((profile) => {
 		const kind = getSchemaKind(profile);
@@ -101,6 +107,9 @@ export function schemaToFlowFiltered(
 	const allVisibleKinds = new Set<string>();
 	for (const node of visibleNodes) {
 		allVisibleKinds.add(getSchemaKind(node));
+	}
+	for (const generic of visibleGenerics) {
+		allVisibleKinds.add(getSchemaKind(generic));
 	}
 	for (const profile of visibleProfiles) {
 		allVisibleKinds.add(getSchemaKind(profile));
@@ -137,10 +146,13 @@ export function schemaToFlowFiltered(
 	// Build a lookup map from kind -> schema for O(1) access in edge creation
 	const schemaByKind = new Map<
 		string,
-		NodeSchema | ProfileSchema | TemplateSchema
+		NodeSchema | GenericSchema | ProfileSchema | TemplateSchema
 	>();
 	for (const node of visibleNodes) {
 		schemaByKind.set(getSchemaKind(node), node);
+	}
+	for (const generic of visibleGenerics) {
+		schemaByKind.set(getSchemaKind(generic), generic);
 	}
 	for (const profile of visibleProfiles) {
 		schemaByKind.set(getSchemaKind(profile), profile);
@@ -164,9 +176,9 @@ export function schemaToFlowFiltered(
 
 	// Helper function to create edges for a schema's relationships
 	const createEdgesForSchema = (
-		schema: NodeSchema | ProfileSchema | TemplateSchema,
+		schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema,
 		kind: string,
-		schemaType: "node" | "profile" | "template",
+		schemaType: "node" | "generic" | "profile" | "template",
 	) => {
 		for (const rel of schema.relationships ?? []) {
 			// Check if the peer is a visible schema
@@ -222,9 +234,11 @@ export function schemaToFlowFiltered(
 
 	// Helper function to get edge color based on schema type
 	const getEdgeColorForType = (
-		schemaType: "node" | "profile" | "template",
+		schemaType: "node" | "generic" | "profile" | "template",
 	): string => {
 		switch (schemaType) {
+			case "generic":
+				return "#009966"; // Green for generics
 			case "profile":
 				return "#7F22FE"; // Purple for profiles
 			case "template":
@@ -252,8 +266,8 @@ export function schemaToFlowFiltered(
 	const namespaceGroups = new Map<
 		string,
 		Array<{
-			schema: NodeSchema | ProfileSchema | TemplateSchema;
-			type: "node" | "profile" | "template";
+			schema: NodeSchema | GenericSchema | ProfileSchema | TemplateSchema;
+			type: "node" | "generic" | "profile" | "template";
 		}>
 	>();
 
@@ -262,6 +276,15 @@ export function schemaToFlowFiltered(
 			namespaceGroups.set(node.namespace, []);
 		}
 		namespaceGroups.get(node.namespace)?.push({ schema: node, type: "node" });
+	}
+
+	for (const generic of visibleGenerics) {
+		if (!namespaceGroups.has(generic.namespace)) {
+			namespaceGroups.set(generic.namespace, []);
+		}
+		namespaceGroups
+			.get(generic.namespace)
+			?.push({ schema: generic, type: "generic" });
 	}
 
 	for (const profile of visibleProfiles) {
