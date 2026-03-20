@@ -11,10 +11,9 @@ import {
 	SelectionMode,
 	useReactFlow,
 } from "@xyflow/react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import "@xyflow/react/dist/style.css";
 
-import { CollapsedNodesContext } from "../../context/collapsed-nodes-context";
 import { exportGraph } from "../../hooks/use-export";
 import { useGraphLayout } from "../../hooks/use-graph-layout";
 import {
@@ -32,7 +31,6 @@ import {
 } from "../../hooks/use-schema-data";
 import type { NodeSchema, SchemaVisualizerData } from "../../types/schema";
 import { cn } from "../../utils/cn";
-import { getLayoutedElements } from "../../utils/layout";
 import { getSchemaKind } from "../../utils/schema-to-flow";
 import { EdgeContextMenu, type EdgeInfo } from "../menus/edge-context-menu";
 import { NodeContextMenu } from "../menus/node-context-menu";
@@ -81,7 +79,7 @@ function SchemaVisualizerInner({
 	showToolbar = true,
 	showStats = true,
 }: SchemaVisualizerProps) {
-	const { setCenter, getNode, fitView } = useReactFlow();
+	const { setCenter, getNode, getNodes, fitView } = useReactFlow();
 
 	const [isFilterOpen, setIsFilterOpen] = useState(defaultFilterOpen);
 	const [selectedNodeKind, setSelectedNodeKind] = useState<string | null>(null);
@@ -103,45 +101,24 @@ function SchemaVisualizerInner({
 		null,
 	);
 
-	// Graph layout and state
+	// Graph layout and state (backed by Jotai atoms)
 	const {
 		flowNodes,
 		flowEdges,
 		setFlowNodes,
-		setFlowEdges,
 		onNodesChange,
 		onEdgesChange,
+		persistPositions,
 		hiddenNodes,
 		setHiddenNodes,
 		edgeStyle,
 		setEdgeStyle,
-		collapsedNodes,
-		setCollapsedNodes,
 		hasCustomizedView,
 		handleResetView,
+		handleLayout,
 	} = useGraphLayout(data, { nodeSpacing, rowSize }, fitView);
 
-	const toggleCollapsed = useCallback(
-		(nodeId: string) => {
-			setCollapsedNodes((prev) => {
-				const next = new Set(prev);
-				if (next.has(nodeId)) {
-					next.delete(nodeId);
-				} else {
-					next.add(nodeId);
-				}
-				return next;
-			});
-		},
-		[setCollapsedNodes],
-	);
-
-	const collapsedNodesCtx = useMemo(
-		() => ({ collapsedNodes, toggleCollapsed }),
-		[collapsedNodes, toggleCollapsed],
-	);
-
-	// Derived data - React Compiler handles memoization
+	// Derived data
 	const namespaceSchemas = groupSchemasByNamespace(data);
 	const visibleSchemasCount = countVisibleSchemas(data, hiddenNodes);
 	const totalSchemasCount = countTotalSchemas(data);
@@ -228,21 +205,17 @@ function SchemaVisualizerInner({
 
 	const handleShowPeers = (nodeId: string) => {
 		const peerKinds = getPeerKinds(nodeId, data);
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			for (const peerKind of peerKinds) {
-				next.delete(peerKind);
-			}
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		for (const peerKind of peerKinds) {
+			next.delete(peerKind);
+		}
+		setHiddenNodes(next);
 	};
 
 	const handleHideNode = (nodeId: string) => {
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			next.add(nodeId);
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		next.add(nodeId);
+		setHiddenNodes(next);
 		setSelectedNodeKind((current) => (current === nodeId ? null : current));
 	};
 
@@ -262,27 +235,23 @@ function SchemaVisualizerInner({
 		const schemaKinds = nsSchemas.map((item) => getSchemaKind(item.schema));
 		const visibleCount = schemaKinds.filter((k) => !hiddenNodes.has(k)).length;
 
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			if (visibleCount > 0) {
-				for (const kind of schemaKinds) next.add(kind);
-			} else {
-				for (const kind of schemaKinds) next.delete(kind);
-			}
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		if (visibleCount > 0) {
+			for (const kind of schemaKinds) next.add(kind);
+		} else {
+			for (const kind of schemaKinds) next.delete(kind);
+		}
+		setHiddenNodes(next);
 	};
 
 	const toggleNode = (kind: string) => {
-		setHiddenNodes((prev) => {
-			const next = new Set(prev);
-			if (next.has(kind)) {
-				next.delete(kind);
-			} else {
-				next.add(kind);
-			}
-			return next;
-		});
+		const next = new Set(hiddenNodes);
+		if (next.has(kind)) {
+			next.delete(kind);
+		} else {
+			next.add(kind);
+		}
+		setHiddenNodes(next);
 	};
 
 	const focusNode = (kind: string) => {
@@ -295,24 +264,8 @@ function SchemaVisualizerInner({
 		}
 	};
 
-	const handleLayout = (direction: LayoutDirection) => {
-		const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-			flowNodes,
-			flowEdges,
-			{ direction },
-		);
-
-		const edgesWithStyle = layoutedEdges.map((edge) => ({
-			...edge,
-			data: { ...edge.data, edgeStyle },
-		}));
-
-		setFlowNodes(layoutedNodes);
-		setFlowEdges(edgesWithStyle);
-
-		window.requestAnimationFrame(() => {
-			fitView({ padding: 0.2 });
-		});
+	const onLayout = (direction: LayoutDirection) => {
+		handleLayout(direction, flowNodes, flowEdges);
 	};
 
 	const handleExport = (format: ExportFormat) => {
@@ -320,7 +273,6 @@ function SchemaVisualizerInner({
 	};
 
 	return (
-		<CollapsedNodesContext value={collapsedNodesCtx}>
 		<div className={cn("w-full h-full min-h-[500px] flex", className)}>
 			<div className="relative flex-1">
 				<ReactFlow
@@ -332,6 +284,7 @@ function SchemaVisualizerInner({
 					onNodeContextMenu={handleNodeContextMenu}
 					onNodeMouseEnter={handleNodeMouseEnter}
 					onNodeMouseLeave={handleNodeMouseLeave}
+					onNodeDragStop={() => persistPositions(getNodes())}
 					onEdgeContextMenu={handleEdgeContextMenu}
 					onPaneClick={handleCloseContextMenu}
 					nodeTypes={nodeTypes}
@@ -366,7 +319,7 @@ function SchemaVisualizerInner({
 							isFilterOpen={isFilterOpen}
 							edgeStyle={edgeStyle}
 							onEdgeStyleChange={setEdgeStyle}
-							onLayout={handleLayout}
+							onLayout={onLayout}
 							onExport={handleExport}
 							onReset={handleResetView}
 							showReset={hasCustomizedView}
@@ -418,7 +371,6 @@ function SchemaVisualizerInner({
 				/>
 			)}
 		</div>
-		</CollapsedNodesContext>
 	);
 }
 

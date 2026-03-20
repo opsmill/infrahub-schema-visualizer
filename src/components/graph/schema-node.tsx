@@ -1,6 +1,7 @@
 import { Icon } from "@iconify-icon/react";
 import { Handle, type NodeProps, Position } from "@xyflow/react";
-import { useCollapsedNodes } from "../../context/collapsed-nodes-context";
+import { useAtom } from "jotai";
+import { collapsedNodesSetAtom } from "../../store/visualizer-atoms";
 import type { SchemaType } from "../../types/schema";
 import { cn } from "../../utils/cn";
 import type { SchemaNodeData } from "../../utils/schema-to-flow";
@@ -63,8 +64,17 @@ const HANDLE_STYLE_RIGHT = {
 
 export function SchemaNode({ data, selected }: NodeProps) {
 	const nodeData = data as SchemaNodeData;
-	const { collapsedNodes, toggleCollapsed } = useCollapsedNodes();
+	const [collapsedNodes, setCollapsedNodes] = useAtom(collapsedNodesSetAtom);
 	const collapsed = collapsedNodes.has(nodeData.kind);
+	const toggleCollapsed = (kind: string) => {
+		const next = new Set(collapsedNodes);
+		if (next.has(kind)) {
+			next.delete(kind);
+		} else {
+			next.add(kind);
+		}
+		setCollapsedNodes(next);
+	};
 	const hasInheritance =
 		nodeData.inheritFrom && nodeData.inheritFrom.length > 0;
 	const schemaType = nodeData.schemaType ?? "node";

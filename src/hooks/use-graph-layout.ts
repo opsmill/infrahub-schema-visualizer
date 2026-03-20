@@ -1,16 +1,20 @@
 import type { Edge, Node } from "@xyflow/react";
 import { useEdgesState, useNodesState } from "@xyflow/react";
-import { useEffect, useRef, useState } from "react";
+import { useAtom } from "jotai";
+import { useEffect, useRef } from "react";
 
 import type { EdgeStyle } from "../components/toolbar/bottom-toolbar";
+import {
+	collapsedNodesSetAtom,
+	edgeStyleAtom,
+	hasCustomizedViewAtom,
+	hiddenNodesSetAtom,
+	nodePositionsMapAtom,
+} from "../store/visualizer-atoms";
 import type { SchemaVisualizerData } from "../types/schema";
 import { getLayoutedElements } from "../utils/layout";
-import { type PersistedState, visualizerStore } from "../utils/persistence";
 import { schemaToFlowFiltered } from "../utils/schema-to-flow";
-import {
-	getAllSchemaKinds,
-	getDefaultHiddenNodes,
-} from "./use-schema-data";
+import { getAllSchemaKinds, getDefaultHiddenNodes } from "./use-schema-data";
 
 function applyEdgeStyle(edges: Edge[], edgeStyle: EdgeStyle): Edge[] {
 	return edges.map((edge) => ({
@@ -19,15 +23,74 @@ function applyEdgeStyle(edges: Edge[], edgeStyle: EdgeStyle): Edge[] {
 	}));
 }
 
-function buildPositionMap(
-	state: PersistedState | null,
-): Map<string, { x: number; y: number }> | null {
-	if (!state?.nodePositions) return null;
-	const map = new Map<string, { x: number; y: number }>();
-	for (const pos of state.nodePositions) {
-		map.set(pos.id, { x: pos.x, y: pos.y });
+/**
+ * Compute positioned nodes + styled edges from schema data.
+ * Applies saved positions where available, dagre layout for the rest.
+ */
+function buildFlowData(
+	data: SchemaVisualizerData,
+	hiddenNodes: Set<string>,
+	edgeStyle: EdgeStyle,
+	savedPositions: Map<string, { x: number; y: number }>,
+	options: { nodeSpacing: number; rowSize: number },
+): { nodes: Node[]; edges: Edge[] } {
+	const raw = schemaToFlowFiltered(data.nodes, data.generics, hiddenNodes, {
+		nodeSpacing: options.nodeSpacing,
+		rowSize: options.rowSize,
+		profiles: data.profiles,
+		templates: data.templates,
+	});
+
+	const nodesNeedingLayout = raw.nodes.filter(
+		(n) => !savedPositions.has(n.id),
+	);
+
+	let nodes: Node[];
+
+	if (
+		nodesNeedingLayout.length === 0 &&
+		raw.nodes.length > 0 &&
+		savedPositions.size > 0
+	) {
+		nodes = raw.nodes.map((node) => ({
+			...node,
+			position: savedPositions.get(node.id) ?? node.position,
+		}));
+	} else if (
+		nodesNeedingLayout.length > 0 &&
+		nodesNeedingLayout.length < raw.nodes.length
+	) {
+		const maxY =
+			Math.max(...Array.from(savedPositions.values()).map((p) => p.y), 0) + 400;
+
+		nodes = raw.nodes.map((node) => {
+			const saved = savedPositions.get(node.id);
+			if (saved) return { ...node, position: saved };
+			const idx = nodesNeedingLayout.indexOf(node);
+			return {
+				...node,
+				position: {
+					x: (idx % 4) * 400,
+					y: maxY + Math.floor(idx / 4) * 400,
+				},
+			};
+		});
+	} else {
+		const { nodes: layouted, edges: layoutedEdges } = getLayoutedElements(
+			raw.nodes,
+			raw.edges,
+			{ direction: "TB" },
+		);
+
+		nodes = layouted.map((node) => {
+			const saved = savedPositions.get(node.id);
+			return saved ? { ...node, position: saved } : node;
+		});
+
+		return { nodes, edges: applyEdgeStyle(layoutedEdges, edgeStyle) };
 	}
-	return map;
+
+	return { nodes, edges: applyEdgeStyle(raw.edges, edgeStyle) };
 }
 
 export function useGraphLayout(
@@ -35,183 +98,100 @@ export function useGraphLayout(
 	options: { nodeSpacing: number; rowSize: number },
 	fitView: (opts?: { padding: number }) => void,
 ) {
-	const persistedState = useRef(visualizerStore.load());
+	const [hiddenNodes, setHiddenNodes] = useAtom(hiddenNodesSetAtom);
+	const [, setCollapsedNodes] = useAtom(collapsedNodesSetAtom);
+	const [edgeStyle, setEdgeStyle] = useAtom(edgeStyleAtom);
+	const [savedPositions, setSavedPositions] = useAtom(nodePositionsMapAtom);
+	const [hasCustomizedView, setHasCustomizedView] =
+		useAtom(hasCustomizedViewAtom);
 
-	const [edgeStyle, setEdgeStyle] = useState<EdgeStyle>(
-		() => persistedState.current?.edgeStyle ?? "smoothstep",
-	);
-	const [hiddenNodes, setHiddenNodes] = useState<Set<string>>(() =>
-		persistedState.current?.hiddenNodes
-			? new Set(persistedState.current.hiddenNodes)
-			: getDefaultHiddenNodes(data),
-	);
-	const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(() =>
-		persistedState.current?.collapsedNodes
-			? new Set(persistedState.current.collapsedNodes)
-			: getAllSchemaKinds(data),
-	);
-	const [hasCustomizedView, setHasCustomizedView] = useState(
-		() => persistedState.current !== null,
-	);
-
-	const savedNodePositions = useRef(buildPositionMap(persistedState.current));
-	const hasInitialLayout = useRef(false);
-	const currentPositionsRef = useRef<Map<string, { x: number; y: number }>>(
-		new Map(),
-	);
-
-	// Convert schema to flow data — store in ref to avoid unstable object identity
-	const flowDataRef = useRef<{ nodes: Node[]; edges: Edge[] }>({
-		nodes: [],
-		edges: [],
-	});
-	const prevFlowKeyRef = useRef("");
-
-	const nextFlowData = schemaToFlowFiltered(
-		data.nodes,
-		data.generics,
-		hiddenNodes,
-		{
-			nodeSpacing: options.nodeSpacing,
-			rowSize: options.rowSize,
-			profiles: data.profiles,
-			templates: data.templates,
-		},
-	);
-
-	// Derive a stable key from node/edge IDs to detect real changes
-	const nextFlowKey = [
-		nextFlowData.nodes.map((n) => n.id).join(","),
-		nextFlowData.edges.map((e) => e.id).join(","),
-	].join("|");
-
-	if (nextFlowKey !== prevFlowKeyRef.current) {
-		flowDataRef.current = nextFlowData;
-		prevFlowKeyRef.current = nextFlowKey;
+	// One-time init: seed defaults when localStorage was empty
+	const didInit = useRef(false);
+	if (!didInit.current) {
+		didInit.current = true;
+		if (hiddenNodes.size === 0 && !hasCustomizedView) {
+			setHiddenNodes(getDefaultHiddenNodes(data));
+			setCollapsedNodes(getAllSchemaKinds(data));
+		}
 	}
 
-	const flowData = flowDataRef.current;
+	// Compute flow data. React Compiler memoises this.
+	const computed = buildFlowData(
+		data,
+		hiddenNodes,
+		edgeStyle,
+		savedPositions,
+		options,
+	);
+
+	// Derive a stable key from node+edge IDs to detect real changes
+	const flowKey = [
+		computed.nodes.map((n) => n.id).join(","),
+		computed.edges.map((e) => e.id).join(","),
+		edgeStyle,
+	].join("|");
 
 	const [flowNodes, setFlowNodes, onNodesChangeInternal] = useNodesState<Node>(
-		[],
+		computed.nodes,
 	);
-	const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState<Edge>([]);
+	const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState<Edge>(
+		computed.edges,
+	);
 
-	// Track positions on every node change (drag, programmatic update)
+	// Sync computed data → ReactFlow when filters/edge style change.
+	// Single useEffect, guarded by flowKey to prevent redundant updates.
+	const prevFlowKeyRef = useRef(flowKey);
+	useEffect(() => {
+		if (flowKey === prevFlowKeyRef.current) return;
+		prevFlowKeyRef.current = flowKey;
+		setFlowNodes(computed.nodes);
+		setFlowEdges(computed.edges);
+	}, [flowKey, computed, setFlowNodes, setFlowEdges]);
+
+	// Persist all current node positions to the atom (and thus localStorage)
+	const persistPositions = (nodes: Node[]) => {
+		const positions = new Map<string, { x: number; y: number }>();
+		for (const n of nodes) {
+			positions.set(n.id, { x: n.position.x, y: n.position.y });
+		}
+		setSavedPositions(positions);
+		setHasCustomizedView(true);
+	};
+
 	const onNodesChange = (
 		changes: Parameters<typeof onNodesChangeInternal>[0],
 	) => {
 		onNodesChangeInternal(changes);
-		for (const change of changes) {
-			if (change.type === "position" && change.position) {
-				currentPositionsRef.current.set(change.id, { ...change.position });
-			}
-		}
 	};
 
-	// Layout logic
-	useEffect(() => {
-		const existingPositions = new Map<string, { x: number; y: number }>();
-
-		if (savedNodePositions.current) {
-			for (const [id, pos] of savedNodePositions.current) {
-				existingPositions.set(id, pos);
-			}
-			savedNodePositions.current = null;
-		}
-
-		for (const [id, pos] of currentPositionsRef.current) {
-			existingPositions.set(id, pos);
-		}
-
-		const nodesNeedingLayout = flowData.nodes.filter(
-			(node) => !existingPositions.has(node.id),
+	const handleLayout = (
+		direction: "TB" | "LR",
+		currentNodes: Node[],
+		currentEdges: Edge[],
+	) => {
+		const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+			currentNodes,
+			currentEdges,
+			{ direction },
 		);
+		const styledEdges = applyEdgeStyle(layoutedEdges, edgeStyle);
 
-		let finalNodes: Node[];
+		setFlowNodes(layoutedNodes);
+		setFlowEdges(styledEdges);
+		persistPositions(layoutedNodes);
 
-		if (
-			!hasInitialLayout.current ||
-			(nodesNeedingLayout.length > 0 &&
-				nodesNeedingLayout.length === flowData.nodes.length)
-		) {
-			const { nodes: layoutedNodes, edges: layoutedEdges } =
-				getLayoutedElements(flowData.nodes, flowData.edges, {
-					direction: "TB",
-				});
-
-			finalNodes = layoutedNodes.map((node) => {
-				const existingPos = existingPositions.get(node.id);
-				return existingPos ? { ...node, position: existingPos } : node;
-			});
-
-			hasInitialLayout.current = true;
-			setFlowEdges(applyEdgeStyle(layoutedEdges, edgeStyle));
-		} else if (nodesNeedingLayout.length > 0) {
-			const maxY =
-				Math.max(...Array.from(existingPositions.values()).map((p) => p.y), 0) +
-				400;
-
-			finalNodes = flowData.nodes.map((node) => {
-				const existingPos = existingPositions.get(node.id);
-				if (existingPos) {
-					return { ...node, position: existingPos };
-				}
-				const newIndex = nodesNeedingLayout.indexOf(node);
-				const col = newIndex % 4;
-				const row = Math.floor(newIndex / 4);
-				return {
-					...node,
-					position: { x: col * 400, y: maxY + row * 400 },
-				};
-			});
-
-			setFlowEdges(applyEdgeStyle(flowData.edges, edgeStyle));
-		} else {
-			finalNodes = flowData.nodes.map((node) => {
-				const existingPos = existingPositions.get(node.id);
-				return {
-					...node,
-					position: existingPos ?? node.position,
-				};
-			});
-
-			setFlowEdges(applyEdgeStyle(flowData.edges, edgeStyle));
-		}
-
-		setFlowNodes(finalNodes);
-
-		for (const node of finalNodes) {
-			currentPositionsRef.current.set(node.id, { ...node.position });
-		}
-	}, [flowData, edgeStyle, setFlowNodes, setFlowEdges]);
-
-	// Persist state
-	useEffect(() => {
-		if (flowNodes.length === 0) return;
-		visualizerStore.save({
-			hiddenNodes: Array.from(hiddenNodes),
-			edgeStyle,
-			nodePositions: flowNodes.map((n) => ({
-				id: n.id,
-				x: n.position.x,
-				y: n.position.y,
-			})),
-			collapsedNodes: Array.from(collapsedNodes),
+		window.requestAnimationFrame(() => {
+			fitView({ padding: 0.2 });
 		});
-		setHasCustomizedView(true);
-	}, [hiddenNodes, edgeStyle, flowNodes, collapsedNodes]);
+	};
 
 	const handleResetView = () => {
-		const defaultHidden = getDefaultHiddenNodes(data);
-		setHiddenNodes(defaultHidden);
+		setHiddenNodes(getDefaultHiddenNodes(data));
 		setCollapsedNodes(getAllSchemaKinds(data));
 		setEdgeStyle("smoothstep");
-		visualizerStore.clear();
+		setSavedPositions(new Map());
 		setHasCustomizedView(false);
-		savedNodePositions.current = null;
-		hasInitialLayout.current = false;
-		currentPositionsRef.current.clear();
+		prevFlowKeyRef.current = "";
 		setTimeout(() => {
 			fitView({ padding: 0.2 });
 		}, 100);
@@ -224,13 +204,13 @@ export function useGraphLayout(
 		setFlowEdges,
 		onNodesChange,
 		onEdgesChange,
+		persistPositions,
 		hiddenNodes,
 		setHiddenNodes,
 		edgeStyle,
 		setEdgeStyle,
-		collapsedNodes,
-		setCollapsedNodes,
 		hasCustomizedView,
 		handleResetView,
+		handleLayout,
 	};
 }
