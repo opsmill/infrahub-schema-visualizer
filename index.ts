@@ -1,5 +1,4 @@
 // Components
-
 export { SchemaNode } from "./src/components/graph/schema-node";
 export {
 	SchemaVisualizer,
@@ -13,10 +12,28 @@ export {
 	NodeDetailsPanel,
 	type NodeDetailsPanelProps,
 } from "./src/components/panels/node-details-panel";
+export { StatsPanel } from "./src/components/panels/stats-panel";
 export {
 	BottomToolbar,
 	type BottomToolbarProps,
 } from "./src/components/toolbar/bottom-toolbar";
+export { exportGraph } from "./src/hooks/use-export";
+// Hooks
+export { useGraphLayout } from "./src/hooks/use-graph-layout";
+export {
+	getConnectedNodeIds,
+	getHighlightedEdgeNodes,
+	getStyledEdges,
+	getStyledNodes,
+} from "./src/hooks/use-node-highlighting";
+export {
+	countTotalSchemas,
+	countVisibleSchemas,
+	findSchemaByKind,
+	getDefaultHiddenNodes,
+	getPeerKinds,
+	groupSchemasByNamespace,
+} from "./src/hooks/use-schema-data";
 
 // Types
 export type {
@@ -34,12 +51,7 @@ export type {
 // Utilities
 export { cn } from "./src/utils/cn";
 export {
-	applyNamespaceLayout,
 	getSchemaKind,
-	groupByNamespace,
-	type SchemaFlowData,
-	type SchemaFlowNode,
 	type SchemaNodeData,
-	schemaToFlow,
 	schemaToFlowFiltered,
 } from "./src/utils/schema-to-flow";

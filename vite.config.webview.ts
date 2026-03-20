@@ -6,7 +6,14 @@ import { defineConfig } from "vite";
 // Configuration for building a webview bundle for VSCode extension
 // This creates a self-contained bundle with React, styles, and icons included
 export default defineConfig({
-	plugins: [react(), tailwindcss()],
+	plugins: [
+		react({
+			babel: {
+				plugins: [["babel-plugin-react-compiler"]],
+			},
+		}),
+		tailwindcss(),
+	],
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("production"),
 	},
