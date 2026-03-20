@@ -14,10 +14,6 @@ export interface LocalStore<T> {
 	load(): T | null;
 	save(data: T): void;
 	clear(): void;
-	/** Read a single field without loading the entire blob. */
-	get<K extends keyof T>(key: K): T[K] | undefined;
-	/** Patch one or more fields and persist. */
-	patch(partial: Partial<T>): void;
 }
 
 export function createLocalStore<T>(
@@ -57,15 +53,5 @@ export function createLocalStore<T>(
 		}
 	}
 
-	function get<K extends keyof T>(field: K): T[K] | undefined {
-		const state = load();
-		return state?.[field];
-	}
-
-	function patch(partial: Partial<T>): void {
-		const current = load();
-		save({ ...({} as T), ...current, ...partial });
-	}
-
-	return { load, save, clear, get, patch };
+	return { load, save, clear };
 }

@@ -5,55 +5,53 @@ import { useEffect, useRef, useState } from "react";
 import type { EdgeStyle } from "../components/toolbar/bottom-toolbar";
 import type { SchemaVisualizerData } from "../types/schema";
 import { getLayoutedElements } from "../utils/layout";
-import {
-	clearPersistedState,
-	loadPersistedState,
-	savePersistedState,
-} from "../utils/persistence";
+import { type PersistedState, visualizerStore } from "../utils/persistence";
 import { schemaToFlowFiltered } from "../utils/schema-to-flow";
 import { getDefaultHiddenNodes } from "./use-schema-data";
+
+function applyEdgeStyle(edges: Edge[], edgeStyle: EdgeStyle): Edge[] {
+	return edges.map((edge) => ({
+		...edge,
+		data: { ...edge.data, edgeStyle },
+	}));
+}
+
+function buildPositionMap(
+	state: PersistedState | null,
+): Map<string, { x: number; y: number }> | null {
+	if (!state?.nodePositions) return null;
+	const map = new Map<string, { x: number; y: number }>();
+	for (const pos of state.nodePositions) {
+		map.set(pos.id, { x: pos.x, y: pos.y });
+	}
+	return map;
+}
 
 export function useGraphLayout(
 	data: SchemaVisualizerData,
 	options: { nodeSpacing: number; rowSize: number },
 	fitView: (opts?: { padding: number }) => void,
 ) {
-	// Load persisted state once
-	const persistedState = loadPersistedState();
+	const persistedState = useRef(visualizerStore.load());
 
 	const [edgeStyle, setEdgeStyle] = useState<EdgeStyle>(
-		() => persistedState?.edgeStyle ?? "smoothstep",
+		() => persistedState.current?.edgeStyle ?? "smoothstep",
 	);
-
-	const [hiddenNodes, setHiddenNodes] = useState<Set<string>>(() => {
-		if (persistedState?.hiddenNodes) {
-			return new Set(persistedState.hiddenNodes);
-		}
-		return getDefaultHiddenNodes(data);
-	});
-
-	const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(() => {
-		if (persistedState?.collapsedNodes) {
-			return new Set(persistedState.collapsedNodes);
-		}
-		return new Set();
-	});
-
+	const [hiddenNodes, setHiddenNodes] = useState<Set<string>>(() =>
+		persistedState.current?.hiddenNodes
+			? new Set(persistedState.current.hiddenNodes)
+			: getDefaultHiddenNodes(data),
+	);
+	const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(() =>
+		persistedState.current?.collapsedNodes
+			? new Set(persistedState.current.collapsedNodes)
+			: new Set(),
+	);
 	const [hasCustomizedView, setHasCustomizedView] = useState(
-		() => persistedState !== null,
+		() => persistedState.current !== null,
 	);
 
-	// Saved node positions from persistence
-	const savedNodePositions = (() => {
-		if (!persistedState?.nodePositions) return null;
-		const posMap = new Map<string, { x: number; y: number }>();
-		for (const pos of persistedState.nodePositions) {
-			posMap.set(pos.id, { x: pos.x, y: pos.y });
-		}
-		return posMap;
-	})();
-
-	const appliedSavedPositions = useRef(false);
+	const savedNodePositions = useRef(buildPositionMap(persistedState.current));
 	const hasInitialLayout = useRef(false);
 	const currentPositionsRef = useRef<Map<string, { x: number; y: number }>>(
 		new Map(),
@@ -93,11 +91,11 @@ export function useGraphLayout(
 	useEffect(() => {
 		const existingPositions = new Map<string, { x: number; y: number }>();
 
-		if (savedNodePositions && !appliedSavedPositions.current) {
-			for (const [id, pos] of savedNodePositions) {
+		if (savedNodePositions.current) {
+			for (const [id, pos] of savedNodePositions.current) {
 				existingPositions.set(id, pos);
 			}
-			appliedSavedPositions.current = true;
+			savedNodePositions.current = null;
 		}
 
 		for (const [id, pos] of currentPositionsRef.current) {
@@ -126,12 +124,7 @@ export function useGraphLayout(
 			});
 
 			hasInitialLayout.current = true;
-
-			const edgesWithStyle = layoutedEdges.map((edge) => ({
-				...edge,
-				data: { ...edge.data, edgeStyle },
-			}));
-			setFlowEdges(edgesWithStyle);
+			setFlowEdges(applyEdgeStyle(layoutedEdges, edgeStyle));
 		} else if (nodesNeedingLayout.length > 0) {
 			const maxY =
 				Math.max(...Array.from(existingPositions.values()).map((p) => p.y), 0) +
@@ -151,11 +144,7 @@ export function useGraphLayout(
 				};
 			});
 
-			const edgesWithStyle = flowData.edges.map((edge) => ({
-				...edge,
-				data: { ...edge.data, edgeStyle },
-			}));
-			setFlowEdges(edgesWithStyle);
+			setFlowEdges(applyEdgeStyle(flowData.edges, edgeStyle));
 		} else {
 			finalNodes = flowData.nodes.map((node) => {
 				const existingPos = existingPositions.get(node.id);
@@ -165,25 +154,20 @@ export function useGraphLayout(
 				};
 			});
 
-			const edgesWithStyle = flowData.edges.map((edge) => ({
-				...edge,
-				data: { ...edge.data, edgeStyle },
-			}));
-			setFlowEdges(edgesWithStyle);
+			setFlowEdges(applyEdgeStyle(flowData.edges, edgeStyle));
 		}
 
 		setFlowNodes(finalNodes);
 
-		// Seed position ref so onNodesChange has correct initial state
 		for (const node of finalNodes) {
 			currentPositionsRef.current.set(node.id, { ...node.position });
 		}
-	}, [flowData, edgeStyle, setFlowNodes, setFlowEdges, savedNodePositions]);
+	}, [flowData, edgeStyle, setFlowNodes, setFlowEdges]);
 
 	// Persist state
 	useEffect(() => {
 		if (flowNodes.length === 0) return;
-		savePersistedState({
+		visualizerStore.save({
 			hiddenNodes: Array.from(hiddenNodes),
 			edgeStyle,
 			nodePositions: flowNodes.map((n) => ({
@@ -201,9 +185,9 @@ export function useGraphLayout(
 		setHiddenNodes(defaultHidden);
 		setCollapsedNodes(new Set());
 		setEdgeStyle("smoothstep");
-		clearPersistedState();
+		visualizerStore.clear();
 		setHasCustomizedView(false);
-		appliedSavedPositions.current = false;
+		savedNodePositions.current = null;
 		hasInitialLayout.current = false;
 		currentPositionsRef.current.clear();
 		setTimeout(() => {

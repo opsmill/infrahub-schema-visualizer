@@ -1,92 +1,65 @@
 import { Icon } from "@iconify-icon/react";
 import { Handle, type NodeProps, Position } from "@xyflow/react";
 import { useCollapsedNodes } from "../../context/collapsed-nodes-context";
+import type { SchemaType } from "../../types/schema";
 import { cn } from "../../utils/cn";
 import type { SchemaNodeData } from "../../utils/schema-to-flow";
 
-// Get accent color based on schema type
-const getAccentColor = (
-	schemaType: "node" | "generic" | "profile" | "template",
-) => {
-	switch (schemaType) {
-		case "profile":
-			return "border-t-pink-500";
-		case "template":
-			return "border-t-amber-500";
-		case "generic":
-			return "border-t-emerald-500";
-		default:
-			return "border-t-indigo-500";
+const SCHEMA_TYPE_CONFIG: Record<
+	SchemaType,
+	{
+		color: string;
+		accentBorder: string;
+		iconBg: string;
+		icon: string;
+		label: string | null;
 	}
+> = {
+	profile: {
+		color: "pink-500",
+		accentBorder: "border-t-pink-500",
+		iconBg: "bg-pink-500",
+		icon: "mdi:tune-variant",
+		label: "Profile",
+	},
+	template: {
+		color: "amber-500",
+		accentBorder: "border-t-amber-500",
+		iconBg: "bg-amber-500",
+		icon: "mdi:file-document-outline",
+		label: "Template",
+	},
+	generic: {
+		color: "emerald-500",
+		accentBorder: "border-t-emerald-500",
+		iconBg: "bg-emerald-500",
+		icon: "mdi:shape-outline",
+		label: "Generic",
+	},
+	node: {
+		color: "indigo-500",
+		accentBorder: "border-t-indigo-500",
+		iconBg: "bg-indigo-500",
+		icon: "mdi:cube-outline",
+		label: null,
+	},
 };
 
-// Get icon background color based on schema type (matches border-top color)
-const getIconBgColor = (
-	schemaType: "node" | "generic" | "profile" | "template",
-) => {
-	switch (schemaType) {
-		case "profile":
-			return "bg-pink-500";
-		case "template":
-			return "bg-amber-500";
-		case "generic":
-			return "bg-emerald-500";
-		default:
-			return "bg-indigo-500";
-	}
-};
+const HANDLE_STYLE_LEFT = {
+	left: -2,
+	width: 4,
+	height: 4,
+	background: "transparent",
+	border: "none",
+} as const;
 
-// Get default icon based on schema type
-const getDefaultIcon = (
-	schemaType: "node" | "generic" | "profile" | "template",
-) => {
-	switch (schemaType) {
-		case "profile":
-			return "mdi:tune-variant";
-		case "template":
-			return "mdi:file-document-outline";
-		case "generic":
-			return "mdi:shape-outline";
-		default:
-			return "mdi:cube-outline";
-	}
-};
-
-// Get border color based on schema type
-const getBorderColor = (
-	schemaType: "node" | "generic" | "profile" | "template",
-	selected: boolean,
-) => {
-	if (selected) {
-		switch (schemaType) {
-			case "profile":
-				return "border-pink-500";
-			case "template":
-				return "border-amber-500";
-			case "generic":
-				return "border-emerald-500";
-			default:
-				return "border-indigo-500";
-		}
-	}
-	return "border-gray-200";
-};
-
-// Get schema type label
-const getSchemaTypeLabel = (
-	schemaType: "node" | "generic" | "profile" | "template",
-) => {
-	switch (schemaType) {
-		case "profile":
-			return "Profile";
-		case "template":
-			return "Template";
-		case "generic":
-			return "Generic";
-		default:
-			return null;
-	}
-};
+const HANDLE_STYLE_RIGHT = {
+	right: -2,
+	width: 4,
+	height: 4,
+	background: "transparent",
+	border: "none",
+} as const;
 
 export function SchemaNode({ data, selected }: NodeProps) {
 	const nodeData = data as SchemaNodeData;
@@ -95,7 +68,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 	const hasInheritance =
 		nodeData.inheritFrom && nodeData.inheritFrom.length > 0;
 	const schemaType = nodeData.schemaType ?? "node";
-	const typeLabel = getSchemaTypeLabel(schemaType);
+	const config = SCHEMA_TYPE_CONFIG[schemaType];
 	const hasContent =
 		nodeData.attributes.length > 0 || nodeData.relationships.length > 0;
 
@@ -104,7 +77,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 			className={cn(
 				"bg-white rounded-lg shadow-lg border-2 min-w-[280px] max-w-[320px]",
 				"transition-all duration-200",
-				getBorderColor(schemaType, selected ?? false),
+				selected ? `border-${config.color}` : "border-gray-200",
 				selected && "shadow-xl",
 				"hover:shadow-xl",
 			)}
@@ -114,7 +87,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 				type="button"
 				className={cn(
 					"bg-gray-100 px-4 py-3 border-t-4 cursor-pointer select-none w-full text-left",
-					getAccentColor(schemaType),
+					config.accentBorder,
 					collapsed ? "rounded-md" : "rounded-t-md",
 				)}
 				onClick={() => toggleCollapsed(nodeData.kind)}
@@ -123,11 +96,11 @@ export function SchemaNode({ data, selected }: NodeProps) {
 					<div
 						className={cn(
 							"w-8 h-8 rounded-md flex items-center justify-center shrink-0",
-							getIconBgColor(schemaType),
+							config.iconBg,
 						)}
 					>
 						<Icon
-							icon={nodeData.icon || getDefaultIcon(schemaType)}
+							icon={nodeData.icon || config.icon}
 							width="20"
 							height="20"
 							className="text-white"
@@ -138,9 +111,9 @@ export function SchemaNode({ data, selected }: NodeProps) {
 							<h3 className="font-semibold text-sm truncate text-gray-900">
 								{nodeData.label}
 							</h3>
-							{typeLabel && (
+							{config.label && (
 								<span className="px-1.5 py-0.5 text-[10px] bg-gray-300/50 text-gray-600 rounded">
-									{typeLabel}
+									{config.label}
 								</span>
 							)}
 						</div>
@@ -177,25 +150,13 @@ export function SchemaNode({ data, selected }: NodeProps) {
 							type="source"
 							position={Position.Left}
 							id={`rel-${rel.name}-left`}
-							style={{
-								left: -2,
-								width: 4,
-								height: 4,
-								background: "transparent",
-								border: "none",
-							}}
+							style={HANDLE_STYLE_LEFT}
 						/>
 						<Handle
 							type="source"
 							position={Position.Right}
 							id={`rel-${rel.name}-right`}
-							style={{
-								right: -2,
-								width: 4,
-								height: 4,
-								background: "transparent",
-								border: "none",
-							}}
+							style={HANDLE_STYLE_RIGHT}
 						/>
 					</span>
 				))}
@@ -216,7 +177,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 										key={attr.name}
 										className={cn(
 											"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0",
-											attr.inherited ? "bg-gray-50/50" : "",
+											attr.inherited && "bg-gray-50/50",
 										)}
 									>
 										<div className="flex items-center gap-2 min-w-0 flex-1">
@@ -260,21 +221,14 @@ export function SchemaNode({ data, selected }: NodeProps) {
 										key={rel.name}
 										className={cn(
 											"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0 relative group/rel",
-											rel.inherited ? "bg-gray-50/50" : "",
+											rel.inherited && "bg-gray-50/50",
 										)}
 									>
-										{/* Left handle - invisible but functional */}
 										<Handle
 											type="source"
 											position={Position.Left}
 											id={`rel-${rel.name}-left`}
-											style={{
-												left: -2,
-												width: 4,
-												height: 4,
-												background: "transparent",
-												border: "none",
-											}}
+											style={HANDLE_STYLE_LEFT}
 										/>
 										<div className="flex items-center gap-2 min-w-0 flex-1">
 											<span
@@ -316,18 +270,11 @@ export function SchemaNode({ data, selected }: NodeProps) {
 												</span>
 											)}
 										</div>
-										{/* Right handle - invisible but functional */}
 										<Handle
 											type="source"
 											position={Position.Right}
 											id={`rel-${rel.name}-right`}
-											style={{
-												right: -2,
-												width: 4,
-												height: 4,
-												background: "transparent",
-												border: "none",
-											}}
+											style={HANDLE_STYLE_RIGHT}
 										/>
 									</div>
 								))}
