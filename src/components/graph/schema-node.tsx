@@ -96,11 +96,12 @@ export function SchemaNode({ data, selected }: NodeProps) {
 			<button
 				type="button"
 				className={cn(
-					"bg-gray-100 px-4 py-3 border-t-4 cursor-pointer select-none w-full text-left",
+					"bg-gray-100 px-4 py-3 border-t-4 select-none w-full text-left",
 					config.accentBorder,
-					collapsed ? "rounded-md" : "rounded-t-md",
+					hasContent ? "cursor-pointer" : "cursor-default",
+					collapsed || !hasContent ? "rounded-md" : "rounded-t-md",
 				)}
-				onClick={() => toggleCollapsed(nodeData.kind)}
+				onClick={() => hasContent && toggleCollapsed(nodeData.kind)}
 			>
 				<div className="flex items-center gap-2">
 					<div
@@ -171,7 +172,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 					</span>
 				))}
 
-			{!collapsed && (
+			{!collapsed && hasContent && (
 				<>
 					{/* Attributes Section */}
 					{nodeData.attributes.length > 0 && (
@@ -292,13 +293,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 						</div>
 					)}
 
-					{/* Empty state */}
-					{!hasContent && (
-						<div className="px-4 py-6 text-center text-gray-400 text-sm">
-							No attributes or relationships
-						</div>
-					)}
-				</>
+					</>
 			)}
 		</div>
 	);
