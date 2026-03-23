@@ -13,7 +13,7 @@ import {
 	type Viewport,
 } from "@xyflow/react";
 import { useAtom } from "jotai";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { exportGraph } from "../../hooks/use-export";
@@ -77,6 +77,8 @@ export interface SchemaVisualizerProps {
 	showNodeDetails?: boolean;
 	showToolbar?: boolean;
 	showStats?: boolean;
+	highlightNodeId?: string | null;
+	onClearHighlight?: () => void;
 }
 
 function SchemaVisualizerInner({
@@ -90,6 +92,8 @@ function SchemaVisualizerInner({
 	showNodeDetails = true,
 	showToolbar = true,
 	showStats = true,
+	highlightNodeId = null,
+	onClearHighlight,
 }: SchemaVisualizerProps) {
 	const { setCenter, getNode, getNodes, fitView } = useReactFlow();
 	const [savedViewport, setSavedViewport] = useAtom(viewportAtom);
@@ -144,6 +148,39 @@ function SchemaVisualizerInner({
 		handleLayout,
 	} = useGraphLayout(data, { nodeSpacing, rowSize }, fitView);
 
+	// Highlight from prop: unhide node if needed
+	useEffect(() => {
+		if (!highlightNodeId) return;
+		if (hiddenNodes.has(highlightNodeId)) {
+			const next = new Set(hiddenNodes);
+			next.delete(highlightNodeId);
+			setHiddenNodes(next);
+		}
+	}, [highlightNodeId, hiddenNodes, setHiddenNodes]);
+
+	// Highlight from prop: focus and apply glow once the node is in the graph
+	const highlightAppliedRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (!highlightNodeId) {
+			highlightAppliedRef.current = null;
+			return;
+		}
+		if (highlightAppliedRef.current === highlightNodeId) return;
+		const nodeExists = flowNodes.some((n) => n.id === highlightNodeId);
+		if (!nodeExists) return;
+
+		highlightAppliedRef.current = highlightNodeId;
+		const node = getNode(highlightNodeId);
+		if (node) {
+			requestAnimationFrame(() => {
+				setCenter(node.position.x + 150, node.position.y + 100, {
+					zoom: 0.8,
+					duration: 500,
+				});
+			});
+		}
+	}, [highlightNodeId, flowNodes, getNode, setCenter]);
+
 	// Derived data
 	const namespaceSchemas = groupSchemasByNamespace(data);
 	const visibleSchemasCount = countVisibleSchemas(data, hiddenNodes);
@@ -153,16 +190,18 @@ function SchemaVisualizerInner({
 		: null;
 
 	// Highlighting
-	const activeHoveredId = hoveredNodeId ?? filterHoveredNodeId;
+	const activeHoveredId =
+		hoveredNodeId ?? filterHoveredNodeId ?? highlightNodeId;
 	const connectedNodeIds = getConnectedNodeIds(activeHoveredId, flowEdges);
 	const highlightedEdgeNodes = getHighlightedEdgeNodes(
 		highlightedEdgeId,
 		flowEdges,
 	);
+	const effectiveFilterHighlight = filterHoveredNodeId ?? highlightNodeId;
 	const styledNodes = getStyledNodes(
 		flowNodes,
 		connectedNodeIds,
-		filterHoveredNodeId,
+		effectiveFilterHighlight,
 		highlightedEdgeNodes,
 	);
 	const styledEdges = getStyledEdges(
@@ -246,6 +285,7 @@ function SchemaVisualizerInner({
 	};
 
 	const handleNodeClick = (_: React.MouseEvent, node: Node) => {
+		onClearHighlight?.();
 		const schema = findSchemaByKind(data, node.id);
 		if (schema && onNodeClick) {
 			onNodeClick(node.id, schema);
@@ -317,7 +357,10 @@ function SchemaVisualizerInner({
 					onNodeMouseLeave={handleNodeMouseLeave}
 					onNodeDragStop={() => persistPositions(getNodes())}
 					onEdgeContextMenu={handleEdgeContextMenu}
-					onPaneClick={handleCloseContextMenu}
+					onPaneClick={() => {
+						handleCloseContextMenu();
+						onClearHighlight?.();
+					}}
 					onViewportChange={handleViewportChange}
 					nodeTypes={nodeTypes}
 					edgeTypes={edgeTypes}
