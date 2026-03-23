@@ -149,12 +149,20 @@ function SchemaVisualizerInner({
 	} = useGraphLayout(data, { nodeSpacing, rowSize }, fitView);
 
 	// Highlight from prop: unhide node if needed
+	const unhideAppliedRef = useRef<string | null>(null);
 	useEffect(() => {
-		if (!highlightNodeId) return;
+		if (!highlightNodeId) {
+			unhideAppliedRef.current = null;
+			return;
+		}
+		if (unhideAppliedRef.current === highlightNodeId) return;
 		if (hiddenNodes.has(highlightNodeId)) {
+			unhideAppliedRef.current = highlightNodeId;
 			const next = new Set(hiddenNodes);
 			next.delete(highlightNodeId);
 			setHiddenNodes(next);
+		} else {
+			unhideAppliedRef.current = highlightNodeId;
 		}
 	}, [highlightNodeId, hiddenNodes, setHiddenNodes]);
 
@@ -365,7 +373,7 @@ function SchemaVisualizerInner({
 					nodeTypes={nodeTypes}
 					edgeTypes={edgeTypes}
 					connectionMode={ConnectionMode.Loose}
-					fitView={!hasSavedViewport}
+					fitView={!hasSavedViewport && !highlightNodeId}
 					fitViewOptions={{ padding: 0.2 }}
 					minZoom={0.1}
 					maxZoom={1.5}
