@@ -24,6 +24,16 @@ function applyEdgeStyle(edges: Edge[], edgeStyle: EdgeStyle): Edge[] {
 	}));
 }
 
+function collectPositions(
+	nodes: Node[],
+): Map<string, { x: number; y: number }> {
+	const positions = new Map<string, { x: number; y: number }>();
+	for (const n of nodes) {
+		positions.set(n.id, { x: n.position.x, y: n.position.y });
+	}
+	return positions;
+}
+
 /**
  * Compute positioned nodes + styled edges from schema data.
  * Applies saved positions where available, dagre layout for the rest.
@@ -97,7 +107,7 @@ export function useGraphLayout(
 	options: { nodeSpacing: number; rowSize: number },
 	fitView: (opts?: { padding: number }) => void,
 ) {
-	const [hiddenNodes, setHiddenNodes] = useAtom(hiddenNodesSetAtom);
+	const [hiddenNodesRaw, setHiddenNodes] = useAtom(hiddenNodesSetAtom);
 	const [, setCollapsedNodes] = useAtom(collapsedNodesSetAtom);
 	const [edgeStyle, setEdgeStyle] = useAtom(edgeStyleAtom);
 	const [savedPositions, setSavedPositions] = useAtom(nodePositionsMapAtom);
@@ -105,12 +115,19 @@ export function useGraphLayout(
 		hasCustomizedViewAtom,
 	);
 
-	// One-time init: seed defaults when localStorage was empty
+	// On first load with no localStorage, apply default filters synchronously
+	// to avoid a wasted render cycle with all nodes visible before defaults apply.
+	const needsDefaults = hiddenNodesRaw.size === 0 && !hasCustomizedView;
+	const hiddenNodes = needsDefaults
+		? getDefaultHiddenNodes(data)
+		: hiddenNodesRaw;
+
+	// Persist defaults to the atom so the filter panel reflects them.
 	const didInit = useRef(false);
 	if (!didInit.current) {
 		didInit.current = true;
-		if (hiddenNodes.size === 0 && !hasCustomizedView) {
-			setHiddenNodes(getDefaultHiddenNodes(data));
+		if (needsDefaults) {
+			setHiddenNodes(hiddenNodes);
 			setCollapsedNodes(getAllSchemaKinds(data));
 		}
 	}
@@ -131,7 +148,7 @@ export function useGraphLayout(
 		edgeStyle,
 	].join("|");
 
-	const [flowNodes, setFlowNodes, onNodesChangeInternal] = useNodesState<Node>(
+	const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node>(
 		computed.nodes,
 	);
 	const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState<Edge>(
@@ -139,44 +156,17 @@ export function useGraphLayout(
 	);
 
 	// Sync computed data → ReactFlow when filters/edge style change.
-	// Also persists positions so they survive reload.
-	// Guarded by flowKey — safe because flowKey is derived from IDs + edgeStyle, not positions.
-	const prevFlowKeyRef = useRef("");
+	const prevFlowKeyRef = useRef(flowKey);
 	useEffect(() => {
 		if (flowKey === prevFlowKeyRef.current) return;
 		prevFlowKeyRef.current = flowKey;
 		setFlowNodes(computed.nodes);
 		setFlowEdges(computed.edges);
+	}, [flowKey, computed, setFlowNodes, setFlowEdges]);
 
-		const positions = new Map<string, { x: number; y: number }>();
-		for (const n of computed.nodes) {
-			positions.set(n.id, { x: n.position.x, y: n.position.y });
-		}
-		setSavedPositions(positions);
-		setHasCustomizedView(true);
-	}, [
-		flowKey,
-		computed,
-		setFlowNodes,
-		setFlowEdges,
-		setSavedPositions,
-		setHasCustomizedView,
-	]);
-
-	// Persist all current node positions to the atom (and thus localStorage)
 	const persistPositions = (nodes: Node[]) => {
-		const positions = new Map<string, { x: number; y: number }>();
-		for (const n of nodes) {
-			positions.set(n.id, { x: n.position.x, y: n.position.y });
-		}
-		setSavedPositions(positions);
+		setSavedPositions(collectPositions(nodes));
 		setHasCustomizedView(true);
-	};
-
-	const onNodesChange = (
-		changes: Parameters<typeof onNodesChangeInternal>[0],
-	) => {
-		onNodesChangeInternal(changes);
 	};
 
 	const handleLayout = (
@@ -195,7 +185,7 @@ export function useGraphLayout(
 		setFlowEdges(styledEdges);
 		persistPositions(layoutedNodes);
 
-		window.requestAnimationFrame(() => {
+		requestAnimationFrame(() => {
 			fitView({ padding: 0.2 });
 		});
 	};
