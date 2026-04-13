@@ -47,11 +47,7 @@ import { FilterPanel } from "../panels/filter-panel";
 import { LegendPanel } from "../panels/legend-panel";
 import { NodeDetailsPanel } from "../panels/node-details-panel";
 import { StatsPanel } from "../panels/stats-panel";
-import {
-	BottomToolbar,
-	type ExportFormat,
-	type LayoutDirection,
-} from "../toolbar/bottom-toolbar";
+import { BottomToolbar } from "../toolbar/bottom-toolbar";
 import { FloatingEdge } from "./floating-edge";
 import { SchemaNode } from "./schema-node";
 
@@ -97,8 +93,6 @@ function SchemaVisualizerInner({
 }: SchemaVisualizerProps) {
 	const { setCenter, getNode, getNodes, fitView } = useReactFlow();
 	const [savedViewport, setSavedViewport] = useAtom(viewportAtom);
-
-	const hasSavedViewport = savedViewport !== null;
 
 	const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const handleViewportChange = useCallback(
@@ -148,36 +142,24 @@ function SchemaVisualizerInner({
 		handleLayout,
 	} = useGraphLayout(data, { nodeSpacing, rowSize }, fitView);
 
-	// Highlight from prop: unhide node if needed
-	const unhideAppliedRef = useRef<string | null>(null);
-	useEffect(() => {
-		if (!highlightNodeId) {
-			unhideAppliedRef.current = null;
-			return;
-		}
-		if (unhideAppliedRef.current === highlightNodeId) return;
-		if (hiddenNodes.has(highlightNodeId)) {
-			unhideAppliedRef.current = highlightNodeId;
-			const next = new Set(hiddenNodes);
-			next.delete(highlightNodeId);
-			setHiddenNodes(next);
-		} else {
-			unhideAppliedRef.current = highlightNodeId;
-		}
-	}, [highlightNodeId, hiddenNodes, setHiddenNodes]);
-
-	// Highlight from prop: focus and apply glow once the node is in the graph
+	// Highlight from prop: unhide node if hidden, then focus it once visible
 	const highlightAppliedRef = useRef<string | null>(null);
 	useEffect(() => {
 		if (!highlightNodeId) {
 			highlightAppliedRef.current = null;
 			return;
 		}
-		if (highlightAppliedRef.current === highlightNodeId) return;
-		const nodeExists = flowNodes.some((n) => n.id === highlightNodeId);
-		if (!nodeExists) return;
 
+		if (hiddenNodes.has(highlightNodeId)) {
+			const next = new Set(hiddenNodes);
+			next.delete(highlightNodeId);
+			setHiddenNodes(next);
+			return;
+		}
+
+		if (highlightAppliedRef.current === highlightNodeId) return;
 		highlightAppliedRef.current = highlightNodeId;
+
 		const node = getNode(highlightNodeId);
 		if (node) {
 			requestAnimationFrame(() => {
@@ -187,7 +169,7 @@ function SchemaVisualizerInner({
 				});
 			});
 		}
-	}, [highlightNodeId, flowNodes, getNode, setCenter]);
+	}, [highlightNodeId, hiddenNodes, setHiddenNodes, getNode, setCenter]);
 
 	// Derived data
 	const namespaceSchemas = groupSchemasByNamespace(data);
@@ -338,19 +320,6 @@ function SchemaVisualizerInner({
 		}
 	};
 
-	const handleResetViewWithViewport = () => {
-		setSavedViewport(null);
-		handleResetView();
-	};
-
-	const onLayout = (direction: LayoutDirection) => {
-		handleLayout(direction, flowNodes, flowEdges);
-	};
-
-	const handleExport = (format: ExportFormat) => {
-		exportGraph(flowNodes, format);
-	};
-
 	return (
 		<div className={cn("w-full h-full min-h-[500px] flex", className)}>
 			<div className="relative flex-1">
@@ -373,7 +342,7 @@ function SchemaVisualizerInner({
 					nodeTypes={nodeTypes}
 					edgeTypes={edgeTypes}
 					connectionMode={ConnectionMode.Loose}
-					fitView={!hasSavedViewport && !highlightNodeId}
+					fitView={!savedViewport && !highlightNodeId}
 					fitViewOptions={{ padding: 0.2 }}
 					minZoom={0.1}
 					maxZoom={1.5}
@@ -402,9 +371,12 @@ function SchemaVisualizerInner({
 							isFilterOpen={isFilterOpen}
 							edgeStyle={edgeStyle}
 							onEdgeStyleChange={setEdgeStyle}
-							onLayout={onLayout}
-							onExport={handleExport}
-							onReset={handleResetViewWithViewport}
+							onLayout={(direction) => handleLayout(direction, flowNodes, flowEdges)}
+							onExport={(format) => exportGraph(flowNodes, format)}
+							onReset={() => {
+								setSavedViewport(null);
+								handleResetView();
+							}}
 							showReset={hasCustomizedView}
 						/>
 					)}
