@@ -97,12 +97,10 @@ export function countVisibleSchemas(
 	data: SchemaVisualizerData,
 	hiddenNodes: Set<string>,
 ): number {
+	// Generics are excluded to match the hidden-from-graph behaviour above.
 	let count = 0;
 	count += data.nodes.filter(
 		(node) => !hiddenNodes.has(getSchemaKind(node)),
-	).length;
-	count += data.generics.filter(
-		(generic) => !hiddenNodes.has(getSchemaKind(generic)),
 	).length;
 	count += (data.profiles ?? []).filter(
 		(profile) => !hiddenNodes.has(getSchemaKind(profile)),
@@ -117,9 +115,9 @@ export function countVisibleSchemas(
  * Count total schemas (nodes + profiles + templates).
  */
 export function countTotalSchemas(data: SchemaVisualizerData): number {
+	// Generics are excluded to match the hidden-from-graph behaviour above.
 	return (
 		data.nodes.length +
-		data.generics.length +
 		(data.profiles?.length ?? 0) +
 		(data.templates?.length ?? 0)
 	);
