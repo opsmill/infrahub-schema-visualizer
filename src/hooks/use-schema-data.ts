@@ -71,12 +71,8 @@ export function groupSchemasByNamespace(
 		}
 		groups.get(node.namespace)?.push({ schema: node, type: "node" });
 	}
-	for (const generic of data.generics) {
-		if (!groups.has(generic.namespace)) {
-			groups.set(generic.namespace, []);
-		}
-		groups.get(generic.namespace)?.push({ schema: generic, type: "generic" });
-	}
+	// Generics are intentionally not grouped — they are hidden from the filter
+	// panel alongside their removal from the rendered graph.
 	for (const profile of data.profiles ?? []) {
 		if (!groups.has(profile.namespace)) {
 			groups.set(profile.namespace, []);

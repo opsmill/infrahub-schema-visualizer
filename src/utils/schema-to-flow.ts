@@ -103,13 +103,13 @@ export function schemaToFlowFiltered(
 		return !hiddenNodes.has(kind);
 	});
 
-	// Create a map of all visible schema kinds for relationship edge creation
+	// Create a map of all visible schema kinds for relationship edge creation.
+	// Generics are intentionally excluded here so relationships targeting a
+	// generic fall through to the inheritance fan-out branch below instead of
+	// drawing a direct edge to the generic box (which isn't rendered).
 	const allVisibleKinds = new Set<string>();
 	for (const node of visibleNodes) {
 		allVisibleKinds.add(getSchemaKind(node));
-	}
-	for (const generic of visibleGenerics) {
-		allVisibleKinds.add(getSchemaKind(generic));
 	}
 	for (const profile of visibleProfiles) {
 		allVisibleKinds.add(getSchemaKind(profile));
@@ -278,14 +278,9 @@ export function schemaToFlowFiltered(
 		namespaceGroups.get(node.namespace)?.push({ schema: node, type: "node" });
 	}
 
-	for (const generic of visibleGenerics) {
-		if (!namespaceGroups.has(generic.namespace)) {
-			namespaceGroups.set(generic.namespace, []);
-		}
-		namespaceGroups
-			.get(generic.namespace)
-			?.push({ schema: generic, type: "generic" });
-	}
+	// Generics are intentionally not added to the layout — they are kept in the
+	// schema data (genericsMap, genericToInheritingNodes, inheritFrom badges) but
+	// hidden from the rendered graph until the underlying linking bug is fixed.
 
 	for (const profile of visibleProfiles) {
 		if (!namespaceGroups.has(profile.namespace)) {
