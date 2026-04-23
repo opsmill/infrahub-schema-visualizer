@@ -27,6 +27,7 @@ export function StatsPanel({
 					{(data.templates?.length ?? 0) > 0 && (
 						<StatRow label="Templates" value={data.templates?.length ?? 0} />
 					)}
+					<StatRow label="Generics" value={data.generics.length} />
 				</div>
 			</div>
 		</Panel>
