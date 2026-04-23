@@ -7,6 +7,7 @@ import type {
 	TemplateSchema,
 } from "../../types/schema";
 import { cn } from "../../utils/cn";
+import { getSchemaIcon } from "../../utils/get-schema-icon";
 import { getSchemaKind } from "../../utils/schema-to-flow";
 
 export type SchemaItem = {
@@ -227,12 +228,10 @@ export function FilterPanel({
 														)}
 													/>
 												</button>
-												{item.schema.icon && (
-													<Icon
-														icon={item.schema.icon}
-														className="shrink-0 text-gray-500 text-sm"
-													/>
-												)}
+												<Icon
+													icon={getSchemaIcon(item.schema)}
+													className="shrink-0 text-gray-500 text-sm"
+												/>
 												<span className="min-w-0 flex-1 truncate text-left text-gray-600 text-sm">
 													{item.schema.label ?? item.schema.name}
 												</span>
