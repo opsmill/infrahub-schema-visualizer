@@ -103,13 +103,13 @@ export function schemaToFlowFiltered(
 		return !hiddenNodes.has(kind);
 	});
 
-	// Create a map of all visible schema kinds for relationship edge creation.
-	// Generics are intentionally excluded here so relationships targeting a
-	// generic fall through to the inheritance fan-out branch below instead of
-	// drawing a direct edge to the generic box (which isn't rendered).
+	// Create a map of all visible schema kinds for relationship edge creation
 	const allVisibleKinds = new Set<string>();
 	for (const node of visibleNodes) {
 		allVisibleKinds.add(getSchemaKind(node));
+	}
+	for (const generic of visibleGenerics) {
+		allVisibleKinds.add(getSchemaKind(generic));
 	}
 	for (const profile of visibleProfiles) {
 		allVisibleKinds.add(getSchemaKind(profile));
@@ -278,9 +278,14 @@ export function schemaToFlowFiltered(
 		namespaceGroups.get(node.namespace)?.push({ schema: node, type: "node" });
 	}
 
-	// Generics are intentionally not added to the layout — they are kept in the
-	// schema data (genericsMap, genericToInheritingNodes, inheritFrom badges) but
-	// hidden from the rendered graph until the underlying linking bug is fixed.
+	for (const generic of visibleGenerics) {
+		if (!namespaceGroups.has(generic.namespace)) {
+			namespaceGroups.set(generic.namespace, []);
+		}
+		namespaceGroups
+			.get(generic.namespace)
+			?.push({ schema: generic, type: "generic" });
+	}
 
 	for (const profile of visibleProfiles) {
 		if (!namespaceGroups.has(profile.namespace)) {
@@ -298,6 +303,32 @@ export function schemaToFlowFiltered(
 		namespaceGroups
 			.get(template.namespace)
 			?.push({ schema: template, type: "template" });
+	}
+
+	// Inheritance edges: generic -> each inheriting node/template. Source is the
+	// generic so dagre ranks it above (TB) / left-of (LR) its children.
+	// `genericToInheritingNodes` is keyed by generic kind; all target kinds are
+	// already visible (the map is built from visibleNodes + visibleTemplates).
+	for (const [genericKind, inheritingKinds] of genericToInheritingNodes) {
+		if (!allVisibleKinds.has(genericKind)) continue;
+		for (const childKind of inheritingKinds) {
+			edges.push({
+				id: `${genericKind}-inherits-${childKind}`,
+				source: genericKind,
+				target: childKind,
+				type: "floating",
+				data: {
+					sourceRelName: "",
+					targetRelName: null,
+					sourceCardinality: "one",
+					targetCardinality: "one",
+				},
+				style: {
+					stroke: "#009966",
+					strokeWidth: 2,
+				},
+			});
+		}
 	}
 
 	// Layout schemas by namespace
