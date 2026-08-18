@@ -1,3 +1,6 @@
+// Theme tokens (light defaults + dark overrides, scoped to the visualizer)
+import "./src/theme.css";
+
 // Components
 export { SchemaNode } from "./src/components/graph/schema-node";
 export {

@@ -15,6 +15,7 @@ import {
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
+import "../../theme.css";
 
 import { exportGraph } from "../../hooks/use-export";
 import { useGraphLayout } from "../../hooks/use-graph-layout";
@@ -62,6 +63,11 @@ const edgeTypes: EdgeTypes = {
 export interface SchemaVisualizerProps {
 	data: SchemaVisualizerData;
 	className?: string;
+	/**
+	 * Theme resolved by the embedding application. The visualizer never
+	 * detects the theme itself (no matchMedia / OS detection).
+	 */
+	theme?: "light" | "dark";
 	showBackground?: boolean;
 	rowSize?: number;
 	nodeSpacing?: number;
@@ -80,6 +86,7 @@ export interface SchemaVisualizerProps {
 function SchemaVisualizerInner({
 	data,
 	className,
+	theme = "light",
 	showBackground = true,
 	rowSize = 4,
 	nodeSpacing = 400,
@@ -321,9 +328,16 @@ function SchemaVisualizerInner({
 	};
 
 	return (
-		<div className={cn("w-full h-full min-h-[500px] flex", className)}>
+		<div
+			className={cn(
+				"schema-visualizer w-full h-full min-h-[500px] flex",
+				className,
+			)}
+			data-theme={theme}
+		>
 			<div className="relative flex-1">
 				<ReactFlow
+					colorMode={theme}
 					nodes={styledNodes}
 					edges={styledEdges}
 					onNodesChange={onNodesChange}
@@ -371,7 +385,9 @@ function SchemaVisualizerInner({
 							isFilterOpen={isFilterOpen}
 							edgeStyle={edgeStyle}
 							onEdgeStyleChange={setEdgeStyle}
-							onLayout={(direction) => handleLayout(direction, flowNodes, flowEdges)}
+							onLayout={(direction) =>
+								handleLayout(direction, flowNodes, flowEdges)
+							}
 							onExport={(format) => exportGraph(flowNodes, format)}
 							onReset={() => {
 								setSavedViewport(null);

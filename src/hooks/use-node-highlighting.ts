@@ -55,7 +55,7 @@ export function getStyledNodes(
 				opacity: shouldDim ? 0.25 : 1,
 				transition: "opacity 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
 				boxShadow: isHighlighted
-					? "0 0 0 3px #6366f1, 0 0 20px rgba(99, 102, 241, 0.4)"
+					? "0 0 0 3px var(--sv-accent, #6366f1), 0 0 20px color-mix(in oklab, var(--sv-accent, #6366f1) 40%, transparent)"
 					: undefined,
 				borderRadius: isHighlighted ? "8px" : undefined,
 			},

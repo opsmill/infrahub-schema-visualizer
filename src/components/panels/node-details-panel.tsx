@@ -22,8 +22,8 @@ function PropertyRow({
 	if (!value) return null;
 	return (
 		<div className="flex justify-between gap-2">
-			<span className="text-gray-500">{label}</span>
-			<span className="text-right font-medium text-gray-700">{value}</span>
+			<span className="text-(--sv-text-4)">{label}</span>
+			<span className="text-right font-medium text-(--sv-text-2)">{value}</span>
 		</div>
 	);
 }
@@ -36,10 +36,10 @@ function Badge({
 	variant?: "gray" | "blue" | "yellow" | "red";
 }) {
 	const variantClasses = {
-		gray: "bg-gray-100 text-gray-600",
-		blue: "bg-blue-100 text-blue-700",
-		yellow: "bg-yellow-100 text-yellow-700",
-		red: "bg-red-100 text-red-700",
+		gray: "bg-(--sv-surface-3) text-(--sv-text-3)",
+		blue: "bg-(--sv-badge-blue-bg) text-(--sv-badge-blue-text)",
+		yellow: "bg-(--sv-badge-yellow-bg) text-(--sv-badge-yellow-text)",
+		red: "bg-(--sv-badge-red-bg) text-(--sv-badge-red-text)",
 	};
 
 	return (
@@ -55,23 +55,26 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 	if (!schema) return null;
 
 	return (
-		<div className="flex h-full w-96 flex-col border-gray-200 border-l bg-white">
-			<div className="flex items-center justify-between border-gray-200 border-b px-4 py-3">
+		<div className="flex h-full w-96 flex-col border-(--sv-border) border-l bg-(--sv-surface)">
+			<div className="flex items-center justify-between border-(--sv-border) border-b px-4 py-3">
 				<div className="flex items-center gap-2">
 					{schema.icon && (
-						<Icon icon={schema.icon} className="text-indigo-600 text-xl" />
+						<Icon
+							icon={schema.icon}
+							className="text-(--sv-accent-text) text-xl"
+						/>
 					)}
 					<div>
-						<h3 className="font-semibold text-gray-700">
+						<h3 className="font-semibold text-(--sv-text-2)">
 							{schema.label ?? schema.name}
 						</h3>
-						<p className="text-gray-500 text-xs">{schema.kind}</p>
+						<p className="text-(--sv-text-4) text-xs">{schema.kind}</p>
 					</div>
 				</div>
 				<button
 					type="button"
 					onClick={onClose}
-					className="p-1 rounded hover:bg-gray-100 text-gray-500"
+					className="p-1 rounded hover:bg-(--sv-surface-3) text-(--sv-text-4)"
 				>
 					<Icon icon="mdi:close" className="text-lg" />
 				</button>
@@ -79,8 +82,8 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 
 			<div className="flex-1 overflow-y-auto">
 				{/* Properties */}
-				<div className="border-gray-100 border-b p-4">
-					<h4 className="mb-2 font-semibold text-gray-600 text-xs uppercase tracking-wide">
+				<div className="border-(--sv-border-2) border-b p-4">
+					<h4 className="mb-2 font-semibold text-(--sv-text-3) text-xs uppercase tracking-wide">
 						Properties
 					</h4>
 					<div className="space-y-2 text-sm">
@@ -94,7 +97,7 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 							schema.inherit_from &&
 							schema.inherit_from.length > 0 && (
 								<div className="flex justify-between">
-									<span className="text-gray-500">Inherit from</span>
+									<span className="text-(--sv-text-4)">Inherit from</span>
 									<div className="flex flex-wrap justify-end gap-1">
 										{schema.inherit_from.map((k: string) => (
 											<Badge key={k} variant="blue">
@@ -108,8 +111,8 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 				</div>
 
 				{/* Attributes */}
-				<div className="border-gray-100 border-b p-4">
-					<h4 className="mb-2 font-semibold text-gray-600 text-xs uppercase tracking-wide">
+				<div className="border-(--sv-border-2) border-b p-4">
+					<h4 className="mb-2 font-semibold text-(--sv-text-3) text-xs uppercase tracking-wide">
 						Attributes ({schema.attributes?.length ?? 0})
 					</h4>
 					{schema.attributes && schema.attributes.length > 0 ? (
@@ -120,21 +123,21 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 									className={cn(
 										"rounded border p-2 text-sm",
 										attr.inherited
-											? "border-gray-100 bg-gray-50"
-											: "border-gray-200",
+											? "border-(--sv-border-2) bg-(--sv-surface-2)"
+											: "border-(--sv-border)",
 									)}
 								>
 									<div className="flex items-center justify-between">
-										<span className="font-medium text-gray-700">
+										<span className="font-medium text-(--sv-text-2)">
 											{attr.label ?? attr.name}
 											{attr.optional && (
-												<span className="ml-1 text-gray-400">?</span>
+												<span className="ml-1 text-(--sv-text-5)">?</span>
 											)}
 										</span>
 										<Badge variant="gray">{attr.kind}</Badge>
 									</div>
 									{attr.description && (
-										<p className="mt-1 text-gray-500 text-xs">
+										<p className="mt-1 text-(--sv-text-4) text-xs">
 											{attr.description}
 										</p>
 									)}
@@ -149,13 +152,13 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 							))}
 						</div>
 					) : (
-						<p className="text-gray-400 text-sm">No attributes</p>
+						<p className="text-(--sv-text-5) text-sm">No attributes</p>
 					)}
 				</div>
 
 				{/* Relationships */}
 				<div className="p-4">
-					<h4 className="mb-2 font-semibold text-gray-600 text-xs uppercase tracking-wide">
+					<h4 className="mb-2 font-semibold text-(--sv-text-3) text-xs uppercase tracking-wide">
 						Relationships ({schema.relationships?.length ?? 0})
 					</h4>
 					{schema.relationships && schema.relationships.length > 0 ? (
@@ -166,12 +169,12 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 									className={cn(
 										"rounded border p-2 text-sm",
 										rel.inherited
-											? "border-gray-100 bg-gray-50"
-											: "border-gray-200",
+											? "border-(--sv-border-2) bg-(--sv-surface-2)"
+											: "border-(--sv-border)",
 									)}
 								>
 									<div className="flex items-center justify-between">
-										<span className="font-medium text-gray-700">
+										<span className="font-medium text-(--sv-text-2)">
 											{rel.label ?? rel.name}
 										</span>
 										<div className="flex items-center gap-1">
@@ -180,13 +183,13 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 											>
 												{rel.cardinality}
 											</Badge>
-											<span className="text-gray-500 text-xs">
+											<span className="text-(--sv-text-4) text-xs">
 												→ {rel.peer}
 											</span>
 										</div>
 									</div>
 									{rel.description && (
-										<p className="mt-1 text-gray-500 text-xs">
+										<p className="mt-1 text-(--sv-text-4) text-xs">
 											{rel.description}
 										</p>
 									)}
@@ -198,7 +201,7 @@ export function NodeDetailsPanel({ schema, onClose }: NodeDetailsPanelProps) {
 							))}
 						</div>
 					) : (
-						<p className="text-gray-400 text-sm">No relationships</p>
+						<p className="text-(--sv-text-5) text-sm">No relationships</p>
 					)}
 				</div>
 			</div>

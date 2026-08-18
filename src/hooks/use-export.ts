@@ -26,8 +26,14 @@ export function exportGraph(flowNodes: Node[], format: ExportFormat) {
 		0,
 	);
 
+	// Match the themed canvas color; fall back to the light canvas when the
+	// theme tokens are not loaded.
+	const canvasColor = getComputedStyle(viewport)
+		.getPropertyValue("--sv-canvas")
+		.trim();
+
 	const exportOptions = {
-		backgroundColor: "#f8fafc",
+		backgroundColor: canvasColor || "#f8fafc",
 		width: imageWidth,
 		height: imageHeight,
 		style: {

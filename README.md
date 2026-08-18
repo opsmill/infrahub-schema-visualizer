@@ -15,6 +15,7 @@ An interactive graph visualization component for Infrahub schema data. Built wit
 - Animated edges for "many" cardinality relationships
 - Self-referencing relationship indicators
 - State persistence to localStorage
+- Light and dark themes, controlled by the embedding application
 
 ## Schema Types and Colors
 
@@ -52,6 +53,25 @@ function App() {
   );
 }
 ```
+
+## Theming
+
+The visualizer never detects the theme itself (no `matchMedia`, no OS
+detection). The embedding application resolves the theme and passes it in:
+
+```tsx
+<SchemaVisualizer data={schemaData} theme={isDark ? "dark" : "light"} />
+```
+
+All colors come from `--sv-*` CSS custom properties defined in
+`src/theme.css`, scoped to the component root. In the VS Code webview build,
+`renderSchemaVisualizer` accepts an optional `theme` in its options; when
+omitted it follows VS Code's own theme class on `<body>` (`vscode-dark` /
+`vscode-high-contrast`), live.
+
+Standalone exports (`FilterPanel`, `NodeDetailsPanel`, ...) render with the
+light palette by default; wrap them in
+`<div className="schema-visualizer" data-theme="dark">` to render them dark.
 
 ## Exports
 
