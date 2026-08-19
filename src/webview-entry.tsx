@@ -51,31 +51,52 @@ function getVsCodeApi() {
 	return window.__vscodeApi;
 }
 
-// VSCode marks its resolved theme on <body> (vscode-light / vscode-dark /
-// vscode-high-contrast / vscode-high-contrast-light). Mapping that class is
-// still "theme from the embedder": the webview never inspects the OS theme.
-function getVsCodeTheme(): Theme {
+// VSCode marks its resolved theme on <body>, both as a class and as the
+// data-vscode-theme-kind attribute. Mapping that is still "theme from the
+// embedder": the webview never inspects the OS theme.
+const VSCODE_THEME_KINDS = new Set([
+	"vscode-light",
+	"vscode-dark",
+	"vscode-high-contrast",
+	"vscode-high-contrast-light",
+]);
+
+export function getVsCodeTheme(): Theme {
+	// VSCode only adds the theme class once it knows the theme, but it assigns
+	// data-vscode-theme-kind unguarded, so before its first `styles` message the
+	// attribute is literally the string "undefined". Check membership rather
+	// than nullishness, or the class fallback never runs.
+	const kind = document.body.dataset.vscodeThemeKind;
+	const themeKind =
+		kind && VSCODE_THEME_KINDS.has(kind) ? kind : themeKindFromClasses();
+
+	return themeKind === "vscode-dark" || themeKind === "vscode-high-contrast"
+		? "dark"
+		: "light";
+}
+
+function themeKindFromClasses(): string {
 	const bodyClasses = document.body.classList;
 	// High-contrast light themes carry BOTH vscode-high-contrast-light and
 	// vscode-high-contrast (VS Code backwards compatibility), so the light
 	// variant must be checked first.
 	if (bodyClasses.contains("vscode-high-contrast-light")) {
-		return "light";
+		return "vscode-high-contrast-light";
 	}
-	if (
-		bodyClasses.contains("vscode-dark") ||
-		bodyClasses.contains("vscode-high-contrast")
-	) {
-		return "dark";
+	if (bodyClasses.contains("vscode-dark")) {
+		return "vscode-dark";
 	}
-	return "light";
+	if (bodyClasses.contains("vscode-high-contrast")) {
+		return "vscode-high-contrast";
+	}
+	return "vscode-light";
 }
 
-function subscribeToBodyClass(onChange: () => void): () => void {
+function subscribeToBodyTheme(onChange: () => void): () => void {
 	const observer = new MutationObserver(onChange);
 	observer.observe(document.body, {
 		attributes: true,
-		attributeFilter: ["class"],
+		attributeFilter: ["class", "data-vscode-theme-kind"],
 	});
 	return () => observer.disconnect();
 }
@@ -96,7 +117,7 @@ function WebviewApp({
 	onNodeClick: (nodeId: string, schema: unknown) => void;
 }) {
 	const vsCodeTheme = useSyncExternalStore(
-		theme ? subscribeToNothing : subscribeToBodyClass,
+		theme ? subscribeToNothing : subscribeToBodyTheme,
 		getVsCodeTheme,
 	);
 
