@@ -3,15 +3,14 @@
  *
  * The package never detects the theme itself: the embedding application
  * passes `theme="light" | "dark"` to <SchemaVisualizer>, which sets
- * `data-theme` on the component root. Light values are also defined on
- * `:root` so standalone exports (FilterPanel, NodeDetailsPanel, ...) keep
- * today's light appearance when rendered outside the visualizer root.
+ * `data-theme` on the component root. Light values live on `:root` only —
+ * inherited everywhere (including standalone exports like FilterPanel) while
+ * still letting embedders re-brand tokens from their own `:root` rules.
  *
  * Light values mirror the Tailwind v4 palette the components used before
  * tokenization, so light rendering is pixel-identical.
  */
-:root,
-.schema-visualizer {
+:root {
 	/* Canvas behind the graph pane (also used as export background) */
 	--sv-canvas: #f8fafc;
 
@@ -34,10 +33,11 @@
 	--sv-text-4: oklch(55.1% 0.027 264.364);
 	--sv-text-5: oklch(70.7% 0.022 261.325);
 
-	/* Accent: indigo-500 / indigo-600 */
+	/* Accent: indigo-500 / indigo-600, plus the highlight glow */
 	--sv-accent: oklch(58.5% 0.233 277.117);
 	--sv-accent-strong: oklch(51.1% 0.262 276.966);
 	--sv-accent-text: oklch(51.1% 0.262 276.966);
+	--sv-accent-glow: rgb(99 102 241 / 0.4);
 
 	/* Cardinality / property badges */
 	--sv-badge-blue-bg: oklch(93.2% 0.032 255.585);
@@ -59,11 +59,12 @@
 	--sv-profile: #7f22fe;
 	--sv-template: #f54900;
 
-	/* Categorical colors in text roles (badge text needs higher contrast) */
-	--sv-node-text: #087895;
-	--sv-generic-text: #009966;
-	--sv-profile-text: #7f22fe;
-	--sv-template-text: #f54900;
+	/* Categorical colors in text roles follow the base colors in light;
+	   dark overrides them with brightened variants for AA contrast */
+	--sv-node-text: var(--sv-node);
+	--sv-generic-text: var(--sv-generic);
+	--sv-profile-text: var(--sv-profile);
+	--sv-template-text: var(--sv-template);
 
 	/* Panel scrollbars (webview build) */
 	--sv-scrollbar-track: #f1f5f9;
@@ -73,11 +74,15 @@
 
 /*
  * Dark palette: warm stone-based neutrals so the visualizer harmonizes with
- * embedders using warm dark themes. The :has() variant lets the webview
- * wrapper (.schema-visualizer-root) inherit the flipped tokens.
+ * embedders using warm dark themes.
+ *
+ * The dark block is generated for two selectors as SEPARATE rules (not one
+ * selector list): `:has()` support must not gate the component-level rule —
+ * in a browser without `:has()`, one invalid selector in a shared list would
+ * drop the whole rule. The :has() variant lets the webview wrapper
+ * (.schema-visualizer-root) inherit the flipped tokens.
  */
-.schema-visualizer[data-theme="dark"],
-.schema-visualizer-root:has(.schema-visualizer[data-theme="dark"]) {
+.schema-visualizer[data-theme="dark"] {
 	--sv-canvas: #0c0a09;
 
 	--sv-surface: #1c1917;
@@ -96,7 +101,6 @@
 	--sv-text-4: #948e88;
 	--sv-text-5: #6f6963;
 
-	--sv-accent: oklch(58.5% 0.233 277.117);
 	--sv-accent-strong: oklch(67.3% 0.182 276.935);
 	--sv-accent-text: oklch(67.3% 0.182 276.935);
 
@@ -124,13 +128,30 @@
 	--sv-scrollbar-track: #1c1917;
 	--sv-scrollbar-thumb: #44403c;
 	--sv-scrollbar-thumb-hover: #57534e;
+
+	/*
+	 * React Flow's dark colorMode paints the pane and the <Background> SVG a
+	 * cool #141414; its documented override hooks route both to the warm
+	 * canvas token (the SVG sits above the pane, so styling .react-flow
+	 * directly would be painted over). Light keeps React Flow's defaults,
+	 * matching pre-dark behavior exactly.
+	 */
+	--xy-background-color: var(--sv-canvas);
+	--xy-background-pattern-color: #44403c;
 }
 
-/*
- * React Flow's built-in dark colorMode paints the pane a cool #141414;
- * override it with the warm canvas token. Light keeps React Flow's default
- * (transparent pane), matching pre-dark behavior exactly.
- */
-.schema-visualizer[data-theme="dark"] .react-flow {
-	background-color: var(--sv-canvas);
+.schema-visualizer-root:has(.schema-visualizer[data-theme="dark"]) {
+	--sv-canvas: #0c0a09;
+	--sv-text-2: #d6d3d1;
+	--sv-scrollbar-track: #1c1917;
+	--sv-scrollbar-thumb: #44403c;
+	--sv-scrollbar-thumb-hover: #57534e;
+}
+
+/* Marching dashes for the legend's many-cardinality swatch; the 6px shift
+   matches the swatch's gradient tile width for a seamless loop. */
+@keyframes dash-move {
+	to {
+		background-position: 6px 0;
+	}
 }

@@ -15,7 +15,6 @@ import {
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
-import "../../theme.css";
 
 import { exportGraph } from "../../hooks/use-export";
 import { useGraphLayout } from "../../hooks/use-graph-layout";
@@ -60,6 +59,8 @@ const edgeTypes: EdgeTypes = {
 	floating: FloatingEdge,
 };
 
+export type Theme = "light" | "dark";
+
 export interface SchemaVisualizerProps {
 	data: SchemaVisualizerData;
 	className?: string;
@@ -67,7 +68,7 @@ export interface SchemaVisualizerProps {
 	 * Theme resolved by the embedding application. The visualizer never
 	 * detects the theme itself (no matchMedia / OS detection).
 	 */
-	theme?: "light" | "dark";
+	theme?: Theme;
 	showBackground?: boolean;
 	rowSize?: number;
 	nodeSpacing?: number;
@@ -111,6 +112,14 @@ function SchemaVisualizerInner({
 		},
 		[setSavedViewport],
 	);
+
+	// Unmounting must drop the pending debounced write, or it fires into the
+	// shared store after a replacement tree has already mounted.
+	useEffect(() => {
+		return () => {
+			if (viewportTimerRef.current) clearTimeout(viewportTimerRef.current);
+		};
+	}, []);
 
 	const [isFilterOpen, setIsFilterOpen] = useState(defaultFilterOpen);
 	const [selectedNodeKind, setSelectedNodeKind] = useState<string | null>(null);

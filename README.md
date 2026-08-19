@@ -64,7 +64,10 @@ detection). The embedding application resolves the theme and passes it in:
 ```
 
 All colors come from `--sv-*` CSS custom properties defined in
-`src/theme.css`, scoped to the component root. In the VS Code webview build,
+`src/theme.css`: light values on `:root`, dark overrides scoped to the
+component root. To re-brand a token, override it on a selector more specific
+than `:root` (e.g. `.schema-visualizer { --sv-accent: ...; }`) so the
+override wins regardless of stylesheet order. In the VS Code webview build,
 `renderSchemaVisualizer` accepts an optional `theme` in its options; when
 omitted it follows VS Code's own theme class on `<body>` (`vscode-dark` /
 `vscode-high-contrast`), live.

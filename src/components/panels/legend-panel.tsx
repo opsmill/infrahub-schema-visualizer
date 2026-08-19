@@ -107,15 +107,17 @@ export function LegendPanel() {
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
-									<div
-										className="w-8 h-0.5 relative overflow-hidden"
-										style={{ background: "var(--sv-node)" }}
-									>
+									{/* No solid backdrop: the gradient's transparent gaps must show
+									    the panel surface for the dashes to read as animated */}
+									<div className="w-8 h-0.5 relative overflow-hidden">
 										<div
 											className="absolute inset-0"
 											style={{
 												backgroundImage:
-													"repeating-linear-gradient(90deg, transparent, transparent 2px, var(--sv-node) 2px, var(--sv-node) 6px)",
+													"repeating-linear-gradient(90deg, transparent, transparent 2px, var(--sv-node, #087895) 2px, var(--sv-node, #087895) 6px)",
+												// Tile width must equal the keyframe shift (6px) so the
+												// background-position animation wraps without a seam
+												backgroundSize: "6px 100%",
 												animation: "dash-move 0.5s linear infinite",
 											}}
 										/>
@@ -129,7 +131,7 @@ export function LegendPanel() {
 										className="w-8 h-0.5"
 										style={{
 											backgroundImage:
-												"repeating-linear-gradient(90deg, var(--sv-generic), var(--sv-generic) 3px, transparent 3px, transparent 6px)",
+												"repeating-linear-gradient(90deg, var(--sv-generic, #009966), var(--sv-generic, #009966) 3px, transparent 3px, transparent 6px)",
 										}}
 									/>
 									<span className="text-xs text-(--sv-text-3)">

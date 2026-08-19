@@ -35,8 +35,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 const buttonVariants = cva("inline-flex items-center rounded", {
   variants: {
     variant: {
-      primary: "bg-indigo-500 text-white hover:bg-indigo-600",
-      ghost: "hover:bg-gray-100 text-gray-600",
+      primary: "bg-(--sv-accent) text-white hover:bg-(--sv-accent-strong)",
+      ghost: "hover:bg-(--sv-surface-3) text-(--sv-text-3)",
     },
   },
   defaultVariants: { variant: "ghost" },
@@ -56,8 +56,10 @@ export function Button({ variant, className, ...props }: ButtonProps) {
 ## Theme Tokens
 
 All colors come from the `--sv-*` custom properties in `src/theme.css`
-(light values on `:root` and `.schema-visualizer`, dark overrides under
-`[data-theme="dark"]`). Use the Tailwind v4 var shorthand:
+(light values on `:root` only, dark overrides under
+`.schema-visualizer[data-theme="dark"]`). Never re-add light values on
+`.schema-visualizer` — that would shadow embedders' own `:root` re-branding.
+Use the Tailwind v4 var shorthand:
 
 ```tsx
 // Surfaces, borders, text

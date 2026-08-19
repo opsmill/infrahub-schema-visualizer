@@ -6,6 +6,7 @@ export { SchemaNode } from "./src/components/graph/schema-node";
 export {
 	SchemaVisualizer,
 	type SchemaVisualizerProps,
+	type Theme,
 } from "./src/components/graph/schema-visualizer";
 export {
 	FilterPanel,

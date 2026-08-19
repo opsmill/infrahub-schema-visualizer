@@ -3,6 +3,7 @@ import type {
 	GenericSchema,
 	NodeSchema,
 	ProfileSchema,
+	SchemaType,
 	TemplateSchema,
 } from "../types/schema";
 
@@ -40,7 +41,7 @@ const EDGE_COLORS = {
 	generic: "var(--sv-generic, #009966)",
 	profile: "var(--sv-profile, #7F22FE)",
 	template: "var(--sv-template, #F54900)",
-} as const;
+} as const satisfies Record<SchemaType, string>;
 
 interface SchemaFlowData {
 	nodes: SchemaFlowNode[];
@@ -210,7 +211,7 @@ export function schemaToFlowFiltered(
 					style: {
 						stroke: rel.inherited
 							? EDGE_COLORS.generic
-							: getEdgeColorForType(schemaType),
+							: EDGE_COLORS[schemaType],
 						strokeWidth: 2,
 					},
 				});
@@ -241,22 +242,6 @@ export function schemaToFlowFiltered(
 					});
 				}
 			}
-		}
-	};
-
-	// Helper function to get edge color based on schema type
-	const getEdgeColorForType = (
-		schemaType: "node" | "generic" | "profile" | "template",
-	): string => {
-		switch (schemaType) {
-			case "generic":
-				return EDGE_COLORS.generic;
-			case "profile":
-				return EDGE_COLORS.profile;
-			case "template":
-				return EDGE_COLORS.template;
-			default:
-				return EDGE_COLORS.node;
 		}
 	};
 

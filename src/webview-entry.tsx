@@ -6,12 +6,13 @@
  * The bundle is completely self-contained with all styles and dependencies.
  */
 import { useSyncExternalStore } from "react";
-import { createRoot } from "react-dom/client";
-import { SchemaVisualizer } from "./components/graph/schema-visualizer";
+import { createRoot, type Root } from "react-dom/client";
+import {
+	SchemaVisualizer,
+	type Theme,
+} from "./components/graph/schema-visualizer";
 import type { SchemaVisualizerData } from "./types/schema";
 import "./webview.css";
-
-type Theme = "light" | "dark";
 
 // Define the global interface for VSCode communication
 declare global {
@@ -55,6 +56,12 @@ function getVsCodeApi() {
 // still "theme from the embedder": the webview never inspects the OS theme.
 function getVsCodeTheme(): Theme {
 	const bodyClasses = document.body.classList;
+	// High-contrast light themes carry BOTH vscode-high-contrast-light and
+	// vscode-high-contrast (VS Code backwards compatibility), so the light
+	// variant must be checked first.
+	if (bodyClasses.contains("vscode-high-contrast-light")) {
+		return "light";
+	}
 	if (
 		bodyClasses.contains("vscode-dark") ||
 		bodyClasses.contains("vscode-high-contrast")
@@ -73,6 +80,12 @@ function subscribeToBodyClass(onChange: () => void): () => void {
 	return () => observer.disconnect();
 }
 
+// With an explicit embedder theme the body observer is dead weight; hooks
+// must still be called unconditionally, so subscribe to nothing instead.
+function subscribeToNothing(): () => void {
+	return () => {};
+}
+
 function WebviewApp({
 	data,
 	theme,
@@ -83,7 +96,7 @@ function WebviewApp({
 	onNodeClick: (nodeId: string, schema: unknown) => void;
 }) {
 	const vsCodeTheme = useSyncExternalStore(
-		subscribeToBodyClass,
+		theme ? subscribeToNothing : subscribeToBodyClass,
 		getVsCodeTheme,
 	);
 
@@ -100,6 +113,10 @@ function WebviewApp({
 	);
 }
 
+// Re-rendering into the same container must unmount the previous React tree,
+// otherwise its body-class observer keeps re-rendering a detached graph.
+const activeRoots = new WeakMap<HTMLElement, Root>();
+
 // Create the render function that will be called from the webview
 window.renderSchemaVisualizer = (
 	container: HTMLElement,
@@ -110,6 +127,8 @@ window.renderSchemaVisualizer = (
 	},
 ) => {
 	// Clear any existing content
+	activeRoots.get(container)?.unmount();
+	activeRoots.delete(container);
 	container.innerHTML = "";
 
 	// Create a wrapper div with the root class for styling
@@ -120,6 +139,7 @@ window.renderSchemaVisualizer = (
 	container.appendChild(wrapper);
 
 	const root = createRoot(wrapper);
+	activeRoots.set(container, root);
 
 	// Get cached VSCode API if available
 	const vscode = getVsCodeApi();

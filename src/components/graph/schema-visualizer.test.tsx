@@ -1,6 +1,8 @@
-import { describe, expect, test } from "vitest";
+import { createStore, Provider } from "jotai";
+import { afterEach, describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { clearAllStorage } from "../../store/visualizer-atoms";
 import type { SchemaVisualizerData } from "../../types/schema";
 import { SchemaVisualizer } from "./schema-visualizer";
 
@@ -18,6 +20,20 @@ const data: SchemaVisualizerData = {
 	generics: [],
 };
 
+// The visualizer persists viewport/filter state through localStorage-backed
+// atoms; isolate each test with a fresh store and wipe the storage after.
+function renderVisualizer(props?: { theme?: "light" | "dark" }) {
+	return render(
+		<Provider store={createStore()}>
+			<SchemaVisualizer data={data} {...props} />
+		</Provider>,
+	);
+}
+
+afterEach(() => {
+	clearAllStorage();
+});
+
 function getRoot(container: HTMLElement) {
 	return container.querySelector(".schema-visualizer");
 }
@@ -25,7 +41,7 @@ function getRoot(container: HTMLElement) {
 describe("SchemaVisualizer theming", () => {
 	test("defaults to the light theme", async () => {
 		// GIVEN
-		const component = await render(<SchemaVisualizer data={data} />);
+		const component = await renderVisualizer();
 
 		// THEN
 		const root = getRoot(component.container);
@@ -36,9 +52,7 @@ describe("SchemaVisualizer theming", () => {
 
 	test("applies the dark theme when passed by the embedder", async () => {
 		// GIVEN
-		const component = await render(
-			<SchemaVisualizer data={data} theme="dark" />,
-		);
+		const component = await renderVisualizer({ theme: "dark" });
 
 		// THEN
 		const root = getRoot(component.container);
