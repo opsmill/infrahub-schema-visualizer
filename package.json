@@ -1,6 +1,6 @@
 {
 	"name": "infrahub-schema-visualizer",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"type": "module",
 	"main": "index.ts",
 	"types": "./index.ts",
@@ -69,10 +69,5 @@
 		"vite": "^8.0.9",
 		"vitest": "^4.1.5",
 		"vitest-browser-react": "^2.2.0"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"esbuild"
-		]
 	}
 }

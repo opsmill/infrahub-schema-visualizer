@@ -1,0 +1,6 @@
+# allowBuilds is the pnpm 11+ form; onlyBuiltDependencies keeps pnpm 10
+# (used by CI's publish workflow) building esbuild's install script too.
+allowBuilds:
+  esbuild: true
+onlyBuiltDependencies:
+  - esbuild

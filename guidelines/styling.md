@@ -35,8 +35,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 const buttonVariants = cva("inline-flex items-center rounded", {
   variants: {
     variant: {
-      primary: "bg-indigo-500 text-white hover:bg-indigo-600",
-      ghost: "hover:bg-gray-100 text-gray-600",
+      primary: "bg-(--sv-accent) text-white hover:bg-(--sv-accent-strong)",
+      ghost: "hover:bg-(--sv-surface-3) text-(--sv-text-3)",
     },
   },
   defaultVariants: { variant: "ghost" },
@@ -53,10 +53,35 @@ export function Button({ variant, className, ...props }: ButtonProps) {
 }
 ```
 
+## Theme Tokens
+
+All colors come from the `--sv-*` custom properties in `src/theme.css`
+(light values on `:root` only, dark overrides under
+`.schema-visualizer[data-theme="dark"]`). Never re-add light values on
+`.schema-visualizer` — that would shadow embedders' own `:root` re-branding.
+Use the Tailwind v4 var shorthand:
+
+```tsx
+// Surfaces, borders, text
+<div className="bg-(--sv-surface) border-(--sv-border) text-(--sv-text-2)" />
+
+// Schema-type categorical colors (fills vs. text roles)
+<div className="bg-(--sv-profile)" />
+<span className="text-(--sv-profile-text)" />
+```
+
+In JS-side styles (edge strokes, box shadows), use `var()` with the light
+hex as fallback so utility-only consumers keep working without the token
+stylesheet: `stroke: "var(--sv-node, #087895)"`.
+
+When adding a new color, define it as a token pair (light + dark) in
+`src/theme.css` — never hardcode a palette class or hex in a component.
+
 ## Forbidden
 
 | Don't | Do |
 |-------|-----|
 | Inline `style={{}}` | Tailwind classes |
 | CSS modules | Tailwind utilities |
-| Arbitrary color values `bg-[#6366f1]` | Tailwind palette names |
+| Palette classes `text-gray-600` or hexes `bg-[#6366f1]` | Theme tokens `text-(--sv-text-3)`, `bg-(--sv-accent)` |
+| Theme detection in the package (`matchMedia`, OS queries) | `theme` prop from the embedder |

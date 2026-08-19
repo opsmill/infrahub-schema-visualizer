@@ -14,10 +14,15 @@ export function StatsPanel({
 	totalCount,
 }: StatsPanelProps) {
 	return (
-		<Panel position="top-left" className="rounded-lg bg-white p-3 shadow-md">
+		<Panel
+			position="top-left"
+			className="rounded-lg bg-(--sv-surface) p-3 shadow-md"
+		>
 			<div className="text-sm">
-				<div className="mb-2 font-semibold text-gray-700">Schema Overview</div>
-				<div className="space-y-1 text-gray-600">
+				<div className="mb-2 font-semibold text-(--sv-text-2)">
+					Schema Overview
+				</div>
+				<div className="space-y-1 text-(--sv-text-3)">
 					<StatRow label="Visible" value={visibleCount} />
 					<StatRow label="Total" value={totalCount} />
 					<StatRow label="Nodes" value={data.nodes.length} />

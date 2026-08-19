@@ -59,9 +59,16 @@ const edgeTypes: EdgeTypes = {
 	floating: FloatingEdge,
 };
 
+export type Theme = "light" | "dark";
+
 export interface SchemaVisualizerProps {
 	data: SchemaVisualizerData;
 	className?: string;
+	/**
+	 * Theme resolved by the embedding application. The visualizer never
+	 * detects the theme itself (no matchMedia / OS detection).
+	 */
+	theme?: Theme;
 	showBackground?: boolean;
 	rowSize?: number;
 	nodeSpacing?: number;
@@ -80,6 +87,7 @@ export interface SchemaVisualizerProps {
 function SchemaVisualizerInner({
 	data,
 	className,
+	theme = "light",
 	showBackground = true,
 	rowSize = 4,
 	nodeSpacing = 400,
@@ -95,8 +103,10 @@ function SchemaVisualizerInner({
 	const [savedViewport, setSavedViewport] = useAtom(viewportAtom);
 
 	const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const lastViewportRef = useRef<Viewport | null>(null);
 	const handleViewportChange = useCallback(
 		(viewport: Viewport) => {
+			lastViewportRef.current = viewport;
 			if (viewportTimerRef.current) clearTimeout(viewportTimerRef.current);
 			viewportTimerRef.current = setTimeout(() => {
 				setSavedViewport(viewport);
@@ -104,6 +114,21 @@ function SchemaVisualizerInner({
 		},
 		[setSavedViewport],
 	);
+
+	// A pending debounced write must not survive unmount: firing it later lands
+	// in the shared store after a replacement tree has mounted. Flush it
+	// synchronously rather than dropping it, so panning and immediately closing
+	// still persists the position.
+	useEffect(() => {
+		return () => {
+			if (!viewportTimerRef.current) return;
+			clearTimeout(viewportTimerRef.current);
+			viewportTimerRef.current = null;
+			if (lastViewportRef.current) {
+				setSavedViewport(lastViewportRef.current);
+			}
+		};
+	}, [setSavedViewport]);
 
 	const [isFilterOpen, setIsFilterOpen] = useState(defaultFilterOpen);
 	const [selectedNodeKind, setSelectedNodeKind] = useState<string | null>(null);
@@ -321,9 +346,16 @@ function SchemaVisualizerInner({
 	};
 
 	return (
-		<div className={cn("w-full h-full min-h-[500px] flex", className)}>
+		<div
+			className={cn(
+				"schema-visualizer w-full h-full min-h-[500px] flex",
+				className,
+			)}
+			data-theme={theme}
+		>
 			<div className="relative flex-1">
 				<ReactFlow
+					colorMode={theme}
 					nodes={styledNodes}
 					edges={styledEdges}
 					onNodesChange={onNodesChange}
@@ -371,7 +403,9 @@ function SchemaVisualizerInner({
 							isFilterOpen={isFilterOpen}
 							edgeStyle={edgeStyle}
 							onEdgeStyleChange={setEdgeStyle}
-							onLayout={(direction) => handleLayout(direction, flowNodes, flowEdges)}
+							onLayout={(direction) =>
+								handleLayout(direction, flowNodes, flowEdges)
+							}
 							onExport={(format) => exportGraph(flowNodes, format)}
 							onReset={() => {
 								setSavedViewport(null);

@@ -3,6 +3,7 @@ import type {
 	GenericSchema,
 	NodeSchema,
 	ProfileSchema,
+	SchemaType,
 	TemplateSchema,
 } from "../types/schema";
 
@@ -31,6 +32,16 @@ export interface SchemaNodeData extends Record<string, unknown> {
 }
 
 type SchemaFlowNode = Node<SchemaNodeData, "schemaNode">;
+
+// Edge colors follow the schema-type tokens from theme.css so edges and the
+// legend stay in lockstep across themes. The hex fallbacks preserve the
+// original light colors when the tokens are not loaded (utility-only usage).
+const EDGE_COLORS = {
+	node: "var(--sv-node, #087895)",
+	generic: "var(--sv-generic, #009966)",
+	profile: "var(--sv-profile, #7F22FE)",
+	template: "var(--sv-template, #F54900)",
+} as const satisfies Record<SchemaType, string>;
 
 interface SchemaFlowData {
 	nodes: SchemaFlowNode[];
@@ -198,7 +209,9 @@ export function schemaToFlowFiltered(
 						targetCardinality: rel.cardinality,
 					},
 					style: {
-						stroke: rel.inherited ? "#009966" : getEdgeColorForType(schemaType),
+						stroke: rel.inherited
+							? EDGE_COLORS.generic
+							: EDGE_COLORS[schemaType],
 						strokeWidth: 2,
 					},
 				});
@@ -222,29 +235,13 @@ export function schemaToFlowFiltered(
 							targetCardinality: rel.cardinality,
 						},
 						style: {
-							stroke: "#009966",
+							stroke: EDGE_COLORS.generic,
 							strokeWidth: 2,
 							strokeDasharray: "5,5",
 						},
 					});
 				}
 			}
-		}
-	};
-
-	// Helper function to get edge color based on schema type
-	const getEdgeColorForType = (
-		schemaType: "node" | "generic" | "profile" | "template",
-	): string => {
-		switch (schemaType) {
-			case "generic":
-				return "#009966"; // Green for generics
-			case "profile":
-				return "#7F22FE"; // Purple for profiles
-			case "template":
-				return "#F54900"; // Orange for templates
-			default:
-				return "#087895"; // Teal for nodes
 		}
 	};
 
@@ -324,7 +321,7 @@ export function schemaToFlowFiltered(
 					targetCardinality: "one",
 				},
 				style: {
-					stroke: "#009966",
+					stroke: EDGE_COLORS.generic,
 					strokeWidth: 2,
 				},
 			});

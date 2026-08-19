@@ -77,15 +77,15 @@ export function EdgeContextMenu({
 	return (
 		<div
 			ref={menuRef}
-			className="fixed z-50 min-w-[220px] rounded-lg bg-white py-1 shadow-lg border border-gray-200"
+			className="fixed z-50 min-w-[220px] rounded-lg bg-(--sv-surface) py-1 shadow-lg border border-(--sv-border)"
 			style={{ left: x, top: y }}
 		>
 			{/* Edge info header */}
-			<div className="px-3 py-2 border-b border-gray-100">
-				<div className="text-xs font-medium text-gray-700 truncate">
+			<div className="px-3 py-2 border-b border-(--sv-border-2)">
+				<div className="text-xs font-medium text-(--sv-text-2) truncate">
 					{edge.sourceRelName}
 				</div>
-				<div className="text-[10px] text-gray-400 mt-0.5">
+				<div className="text-[10px] text-(--sv-text-5) mt-0.5">
 					{edge.source} → {edge.target}
 				</div>
 			</div>
@@ -93,20 +93,23 @@ export function EdgeContextMenu({
 			<button
 				type="button"
 				onClick={handleHighlight}
-				className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+				className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--sv-text-2) hover:bg-(--sv-surface-3)"
 			>
-				<Icon icon="mdi:spotlight-beam" className="text-lg text-gray-500" />
+				<Icon
+					icon="mdi:spotlight-beam"
+					className="text-lg text-(--sv-text-4)"
+				/>
 				Highlight relationship
 			</button>
-			<div className="my-1 border-t border-gray-100" />
+			<div className="my-1 border-t border-(--sv-border-2)" />
 			<button
 				type="button"
 				onClick={handleCopyInfo}
-				className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+				className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--sv-text-2) hover:bg-(--sv-surface-3)"
 			>
 				<Icon
 					icon={copied ? "mdi:check" : "mdi:content-copy"}
-					className={`text-lg ${copied ? "text-green-500" : "text-gray-500"}`}
+					className={`text-lg ${copied ? "text-(--sv-success)" : "text-(--sv-text-4)"}`}
 				/>
 				{copied ? "Copied!" : "Copy relationship info"}
 			</button>

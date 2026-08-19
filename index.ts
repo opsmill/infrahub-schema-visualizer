@@ -1,8 +1,12 @@
+// Theme tokens (light defaults + dark overrides, scoped to the visualizer)
+import "./src/theme.css";
+
 // Components
 export { SchemaNode } from "./src/components/graph/schema-node";
 export {
 	SchemaVisualizer,
 	type SchemaVisualizerProps,
+	type Theme,
 } from "./src/components/graph/schema-visualizer";
 export {
 	FilterPanel,

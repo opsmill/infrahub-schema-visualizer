@@ -17,30 +17,30 @@ const SCHEMA_TYPE_CONFIG: Record<
 	}
 > = {
 	profile: {
-		selectedBorder: "border-[#7F22FE]",
-		accentBorder: "border-t-[#7F22FE]",
-		iconBg: "bg-[#7F22FE]",
+		selectedBorder: "border-(--sv-profile)",
+		accentBorder: "border-t-(--sv-profile)",
+		iconBg: "bg-(--sv-profile)",
 		icon: "mdi:tune-variant",
 		label: "Profile",
 	},
 	template: {
-		selectedBorder: "border-[#F54900]",
-		accentBorder: "border-t-[#F54900]",
-		iconBg: "bg-[#F54900]",
+		selectedBorder: "border-(--sv-template)",
+		accentBorder: "border-t-(--sv-template)",
+		iconBg: "bg-(--sv-template)",
 		icon: "mdi:file-document-outline",
 		label: "Template",
 	},
 	generic: {
-		selectedBorder: "border-[#009966]",
-		accentBorder: "border-t-[#009966]",
-		iconBg: "bg-[#009966]",
+		selectedBorder: "border-(--sv-generic)",
+		accentBorder: "border-t-(--sv-generic)",
+		iconBg: "bg-(--sv-generic)",
 		icon: "mdi:shape-outline",
 		label: "Generic",
 	},
 	node: {
-		selectedBorder: "border-[#087895]",
-		accentBorder: "border-t-[#087895]",
-		iconBg: "bg-[#087895]",
+		selectedBorder: "border-(--sv-node)",
+		accentBorder: "border-t-(--sv-node)",
+		iconBg: "bg-(--sv-node)",
 		icon: "mdi:cube-outline",
 		label: null,
 	},
@@ -81,13 +81,10 @@ function RelationshipHandles({ name }: { name: string }) {
 	);
 }
 
-function SectionHeader({
-	label,
-	count,
-}: { label: string; count: number }) {
+function SectionHeader({ label, count }: { label: string; count: number }) {
 	return (
-		<div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-			<h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+		<div className="px-3 py-2 bg-(--sv-surface-2) border-b border-(--sv-border-2)">
+			<h4 className="text-xs font-semibold text-(--sv-text-4) uppercase tracking-wide">
 				{label} ({count})
 			</h4>
 		</div>
@@ -95,7 +92,7 @@ function SectionHeader({
 }
 
 function InheritedBadge() {
-	return <span className="text-[10px] text-gray-400">(inherited)</span>;
+	return <span className="text-[10px] text-(--sv-text-5)">(inherited)</span>;
 }
 
 function AttributeRow({
@@ -106,23 +103,25 @@ function AttributeRow({
 	return (
 		<div
 			className={cn(
-				"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0",
-				attr.inherited && "bg-gray-50/50",
+				"px-3 py-1.5 flex items-center justify-between text-xs border-b border-(--sv-border-3) last:border-0",
+				attr.inherited && "bg-(--sv-surface-2)/50",
 			)}
 		>
 			<div className="flex items-center gap-2 min-w-0 flex-1">
 				<span
 					className={cn(
 						"font-medium truncate",
-						attr.inherited ? "text-gray-400" : "text-gray-700",
+						attr.inherited ? "text-(--sv-text-5)" : "text-(--sv-text-2)",
 					)}
 				>
 					{attr.name}
-					{attr.optional && <span className="text-gray-400 ml-0.5">?</span>}
+					{attr.optional && (
+						<span className="text-(--sv-text-5) ml-0.5">?</span>
+					)}
 				</span>
 				{attr.inherited && <InheritedBadge />}
 			</div>
-			<span className="text-gray-400 text-[10px] uppercase ml-2 shrink-0">
+			<span className="text-(--sv-text-5) text-[10px] uppercase ml-2 shrink-0">
 				{attr.kind}
 			</span>
 		</div>
@@ -141,8 +140,8 @@ function RelationshipRow({
 	return (
 		<div
 			className={cn(
-				"px-3 py-1.5 flex items-center justify-between text-xs border-b border-gray-50 last:border-0 relative group/rel",
-				rel.inherited && "bg-gray-50/50",
+				"px-3 py-1.5 flex items-center justify-between text-xs border-b border-(--sv-border-3) last:border-0 relative group/rel",
+				rel.inherited && "bg-(--sv-surface-2)/50",
 			)}
 		>
 			<RelationshipHandles name={rel.name} />
@@ -150,7 +149,7 @@ function RelationshipRow({
 				<span
 					className={cn(
 						"font-medium truncate",
-						rel.inherited ? "text-gray-400" : "text-gray-700",
+						rel.inherited ? "text-(--sv-text-5)" : "text-(--sv-text-2)",
 					)}
 				>
 					{rel.name}
@@ -162,22 +161,22 @@ function RelationshipRow({
 					className={cn(
 						"px-1.5 py-0.5 rounded text-[10px]",
 						rel.cardinality === "many"
-							? "bg-purple-100 text-purple-700"
-							: "bg-blue-100 text-blue-700",
+							? "bg-(--sv-badge-purple-bg) text-(--sv-badge-purple-text)"
+							: "bg-(--sv-badge-blue-bg) text-(--sv-badge-blue-text)",
 					)}
 				>
 					{rel.cardinality}
 				</span>
 				{isSelfRef ? (
 					<span
-						className="text-[10px] text-orange-500 flex items-center gap-0.5"
+						className="text-[10px] text-(--sv-self-ref) flex items-center gap-0.5"
 						title="Self-referencing relationship"
 					>
 						<Icon icon="mdi:reload" className="text-sm" />
 						self
 					</span>
 				) : (
-					<span className="text-gray-400 text-[10px] truncate max-w-[80px]">
+					<span className="text-(--sv-text-5) text-[10px] truncate max-w-[80px]">
 						→ {rel.peer}
 					</span>
 				)}
@@ -188,11 +187,13 @@ function RelationshipRow({
 
 function AttributesSection({
 	attributes,
-}: { attributes: SchemaNodeData["attributes"] }) {
+}: {
+	attributes: SchemaNodeData["attributes"];
+}) {
 	if (attributes.length === 0) return null;
 
 	return (
-		<div className="border-b border-gray-100">
+		<div className="border-b border-(--sv-border-2)">
 			<SectionHeader label="Attributes" count={attributes.length} />
 			<div className="max-h-[150px] overflow-y-auto">
 				{attributes.map((attr) => (
@@ -226,7 +227,9 @@ function RelationshipsSection({
 
 function CollapsedHandles({
 	relationships,
-}: { relationships: SchemaNodeData["relationships"] }) {
+}: {
+	relationships: SchemaNodeData["relationships"];
+}) {
 	return (
 		<>
 			{relationships.map((rel) => (
@@ -258,7 +261,7 @@ function NodeHeader({
 		<button
 			type="button"
 			className={cn(
-				"bg-gray-100 px-4 py-3 border-t-4 select-none w-full text-left",
+				"bg-(--sv-surface-3) px-4 py-3 border-t-4 select-none w-full text-left",
 				config.accentBorder,
 				hasContent ? "cursor-pointer" : "cursor-default",
 				collapsed || !hasContent ? "rounded-md" : "rounded-t-md",
@@ -281,23 +284,23 @@ function NodeHeader({
 				</div>
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2">
-						<h3 className="font-semibold text-sm truncate text-gray-900">
+						<h3 className="font-semibold text-sm truncate text-(--sv-text-1)">
 							{nodeData.label}
 						</h3>
 						{config.label && (
-							<span className="px-1.5 py-0.5 text-[10px] bg-gray-300/50 text-gray-600 rounded">
+							<span className="px-1.5 py-0.5 text-[10px] bg-(--sv-surface-5)/50 text-(--sv-text-3) rounded">
 								{config.label}
 							</span>
 						)}
 					</div>
-					<p className="text-xs text-gray-500 truncate">{nodeData.kind}</p>
+					<p className="text-xs text-(--sv-text-4) truncate">{nodeData.kind}</p>
 				</div>
 				{hasContent && (
 					<Icon
 						icon={collapsed ? "mdi:chevron-down" : "mdi:chevron-up"}
 						width="18"
 						height="18"
-						className="text-gray-400 shrink-0"
+						className="text-(--sv-text-5) shrink-0"
 					/>
 				)}
 			</div>
@@ -306,7 +309,7 @@ function NodeHeader({
 					{nodeData.inheritFrom?.map((generic) => (
 						<span
 							key={generic}
-							className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-200 text-gray-600"
+							className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-(--sv-surface-4) text-(--sv-text-3)"
 						>
 							↑ {generic}
 						</span>
@@ -339,9 +342,9 @@ export function SchemaNode({ data, selected }: NodeProps) {
 	return (
 		<div
 			className={cn(
-				"bg-white rounded-lg shadow-lg border-2 min-w-[280px] max-w-[320px]",
+				"bg-(--sv-surface) rounded-lg shadow-lg border-2 min-w-[280px] max-w-[320px]",
 				"transition-all duration-200",
-				selected ? config.selectedBorder : "border-gray-200",
+				selected ? config.selectedBorder : "border-(--sv-border)",
 				selected && "shadow-xl",
 				"hover:shadow-xl",
 			)}
@@ -354,9 +357,7 @@ export function SchemaNode({ data, selected }: NodeProps) {
 				onToggle={toggleCollapsed}
 			/>
 
-			{collapsed && (
-				<CollapsedHandles relationships={nodeData.relationships} />
-			)}
+			{collapsed && <CollapsedHandles relationships={nodeData.relationships} />}
 
 			{!collapsed && hasContent && (
 				<>

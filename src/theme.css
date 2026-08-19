@@ -1,0 +1,161 @@
+/*
+ * Schema Visualizer theme tokens.
+ *
+ * The package never detects the theme itself: the embedding application
+ * passes `theme="light" | "dark"` to <SchemaVisualizer>, which sets
+ * `data-theme` on the component root. Light values live on `:root` only —
+ * inherited everywhere (including standalone exports like FilterPanel) while
+ * still letting embedders re-brand tokens from their own `:root` rules.
+ *
+ * Light values mirror the Tailwind v4 palette the components used before
+ * tokenization, so light rendering is pixel-identical.
+ */
+:root {
+	/* Canvas behind the graph pane (also used as export background) */
+	--sv-canvas: #f8fafc;
+
+	/* Surfaces: white / gray-50 / gray-100 / gray-200 / gray-300 */
+	--sv-surface: #ffffff;
+	--sv-surface-2: oklch(98.5% 0.002 247.839);
+	--sv-surface-3: oklch(96.7% 0.003 264.542);
+	--sv-surface-4: oklch(92.8% 0.006 264.531);
+	--sv-surface-5: oklch(87.2% 0.01 258.338);
+
+	/* Borders: gray-200 / gray-100 / gray-50 */
+	--sv-border: oklch(92.8% 0.006 264.531);
+	--sv-border-2: oklch(96.7% 0.003 264.542);
+	--sv-border-3: oklch(98.5% 0.002 247.839);
+
+	/* Text: gray-900 / gray-700 / gray-600 / gray-500 / gray-400 */
+	--sv-text-1: oklch(21% 0.034 264.665);
+	--sv-text-2: oklch(37.3% 0.034 259.733);
+	--sv-text-3: oklch(44.6% 0.03 256.802);
+	--sv-text-4: oklch(55.1% 0.027 264.364);
+	--sv-text-5: oklch(70.7% 0.022 261.325);
+
+	/* Accent: indigo-500 / indigo-600, plus the highlight glow */
+	--sv-accent: oklch(58.5% 0.233 277.117);
+	--sv-accent-strong: oklch(51.1% 0.262 276.966);
+	--sv-accent-text: oklch(51.1% 0.262 276.966);
+	--sv-accent-glow: rgb(99 102 241 / 0.4);
+
+	/* Cardinality / property badges */
+	--sv-badge-blue-bg: oklch(93.2% 0.032 255.585);
+	--sv-badge-blue-text: oklch(48.8% 0.243 264.376);
+	--sv-badge-purple-bg: oklch(94.6% 0.033 307.174);
+	--sv-badge-purple-text: oklch(49.6% 0.265 301.924);
+	--sv-badge-yellow-bg: oklch(97.3% 0.071 103.193);
+	--sv-badge-yellow-text: oklch(55.4% 0.135 66.442);
+	--sv-badge-red-bg: oklch(93.6% 0.032 17.717);
+	--sv-badge-red-text: oklch(50.5% 0.213 27.518);
+
+	/* One-off markers: green-500 (copy feedback) / orange-500 (self-ref) */
+	--sv-success: oklch(72.3% 0.219 149.579);
+	--sv-self-ref: oklch(70.5% 0.213 47.604);
+
+	/* Categorical schema-type colors (fills, edges, borders, swatches) */
+	--sv-node: #087895;
+	--sv-generic: #009966;
+	--sv-profile: #7f22fe;
+	--sv-template: #f54900;
+
+	/* Categorical colors in text roles follow the base colors in light;
+	   dark overrides them with brightened variants for AA contrast */
+	--sv-node-text: var(--sv-node);
+	--sv-generic-text: var(--sv-generic);
+	--sv-profile-text: var(--sv-profile);
+	--sv-template-text: var(--sv-template);
+
+	/* Panel scrollbars (webview build) */
+	--sv-scrollbar-track: #f1f5f9;
+	--sv-scrollbar-thumb: #cbd5e1;
+	--sv-scrollbar-thumb-hover: #94a3b8;
+}
+
+/*
+ * Dark palette: warm stone-based neutrals so the visualizer harmonizes with
+ * embedders using warm dark themes.
+ *
+ * The dark block is emitted as two SEPARATE rules (not one selector list):
+ * `:has()` support must not gate the component-level rule — in a browser
+ * without `:has()`, one invalid selector in a shared list would drop the whole
+ * rule.
+ *
+ * The :has() variant is not a mirror of the palette. It carries only the few
+ * tokens the webview wrapper itself paints with, and it spells their values
+ * out because it does not define the palette it would otherwise reference.
+ * Adding a wrapper-level token means adding it there too.
+ */
+.schema-visualizer[data-theme="dark"] {
+	--sv-canvas: #0c0a09;
+
+	--sv-surface: #1c1917;
+	--sv-surface-2: #221e1c;
+	--sv-surface-3: #292524;
+	--sv-surface-4: #3a3532;
+	--sv-surface-5: #44403c;
+
+	--sv-border: #3a3532;
+	--sv-border-2: #322d2a;
+	--sv-border-3: #292524;
+
+	--sv-text-1: #f5f5f4;
+	--sv-text-2: #d6d3d1;
+	--sv-text-3: #b5b0ab;
+	--sv-text-4: #948e88;
+	--sv-text-5: #6f6963;
+
+	--sv-accent-strong: oklch(67.3% 0.182 276.935);
+	--sv-accent-text: oklch(67.3% 0.182 276.935);
+
+	--sv-badge-blue-bg: oklch(62.3% 0.214 259.815 / 0.16);
+	--sv-badge-blue-text: oklch(80.9% 0.105 251.813);
+	--sv-badge-purple-bg: oklch(62.7% 0.265 303.9 / 0.16);
+	--sv-badge-purple-text: oklch(82.7% 0.119 306.383);
+	--sv-badge-yellow-bg: oklch(79.5% 0.184 86.047 / 0.15);
+	--sv-badge-yellow-text: oklch(85.2% 0.199 91.936);
+	--sv-badge-red-bg: oklch(63.7% 0.237 25.331 / 0.16);
+	--sv-badge-red-text: oklch(80.8% 0.114 19.571);
+
+	--sv-success: oklch(79.2% 0.209 151.711);
+	--sv-self-ref: oklch(75% 0.183 55.934);
+
+	/* Profile purple is the only fill too dark for dark surfaces (violet-500) */
+	--sv-profile: oklch(60.6% 0.25 292.717);
+
+	/* Brightened text roles for AA contrast on dark surfaces */
+	--sv-node-text: oklch(71.5% 0.143 215.221);
+	--sv-generic-text: oklch(69.6% 0.17 162.48);
+	--sv-profile-text: oklch(70.2% 0.183 293.541);
+	--sv-template-text: oklch(75% 0.183 55.934);
+
+	--sv-scrollbar-track: var(--sv-surface);
+	--sv-scrollbar-thumb: var(--sv-surface-5);
+	--sv-scrollbar-thumb-hover: #57534e;
+
+	/*
+	 * React Flow's dark colorMode paints the pane and the <Background> SVG a
+	 * cool #141414; its documented override hooks route both to the warm
+	 * canvas token (the SVG sits above the pane, so styling .react-flow
+	 * directly would be painted over). Light keeps React Flow's defaults,
+	 * matching pre-dark behavior exactly.
+	 */
+	--xy-background-color: var(--sv-canvas);
+	--xy-background-pattern-color: var(--sv-surface-5);
+}
+
+.schema-visualizer-root:has(.schema-visualizer[data-theme="dark"]) {
+	--sv-canvas: #0c0a09;
+	--sv-text-2: #d6d3d1;
+	--sv-scrollbar-track: #1c1917;
+	--sv-scrollbar-thumb: #44403c;
+	--sv-scrollbar-thumb-hover: #57534e;
+}
+
+/* Marching dashes for the legend's many-cardinality swatch; the 6px shift
+   matches the swatch's gradient tile width for a seamless loop. */
+@keyframes dash-move {
+	to {
+		background-position: 6px 0;
+	}
+}

@@ -1,4 +1,4 @@
-import { Provider, createStore } from "jotai";
+import { createStore, Provider } from "jotai";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
@@ -40,7 +40,6 @@ function renderSchemaNode(
 				selectable
 				draggable
 				isConnectable
-				measured={{ width: 300, height: 200 }}
 			/>
 		</Provider>,
 	);
@@ -76,9 +75,7 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByRole("heading", { name: "Device" }))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("InfraDevice"))
-				.toBeVisible();
+			await expect.element(component.getByText("InfraDevice")).toBeVisible();
 		});
 
 		test("renders a generic schema with type badge", async () => {
@@ -93,9 +90,7 @@ describe("SchemaNode", () => {
 
 			// THEN
 			await expect
-				.element(
-					component.getByRole("heading", { name: "Generic Interface" }),
-				)
+				.element(component.getByRole("heading", { name: "Generic Interface" }))
 				.toBeVisible();
 			await expect
 				.element(component.getByText("Generic", { exact: true }))
@@ -114,9 +109,7 @@ describe("SchemaNode", () => {
 
 			// THEN
 			await expect
-				.element(
-					component.getByRole("heading", { name: "Device Profile" }),
-				)
+				.element(component.getByRole("heading", { name: "Device Profile" }))
 				.toBeVisible();
 			await expect
 				.element(component.getByText("Profile", { exact: true }))
@@ -135,9 +128,7 @@ describe("SchemaNode", () => {
 
 			// THEN
 			await expect
-				.element(
-					component.getByRole("heading", { name: "Device Template" }),
-				)
+				.element(component.getByRole("heading", { name: "Device Template" }))
 				.toBeVisible();
 			await expect
 				.element(component.getByText("Template", { exact: true }))
@@ -158,8 +149,18 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByRole("heading", { name: "Device" }))
 				.toBeVisible();
-			// Node type has no badge label (config.label is null)
-			expect(component.container.querySelector(".bg-gray-300\\/50")).toBeNull();
+			// Node type has no badge label (config.label is null). Assert the badge
+			// element is absent rather than grepping text: kinds like
+			// InfraGenericDevice put "Generic" in the rendered inheritance chain.
+			await expect
+				.element(component.getByText("Profile", { exact: true }))
+				.not.toBeInTheDocument();
+			await expect
+				.element(component.getByText("Template", { exact: true }))
+				.not.toBeInTheDocument();
+			await expect
+				.element(component.getByText("Generic", { exact: true }))
+				.not.toBeInTheDocument();
 		});
 	});
 
@@ -176,13 +177,9 @@ describe("SchemaNode", () => {
 			const component = await renderSchemaNode(data);
 
 			// THEN
-			await expect
-				.element(component.getByText("Attributes (2)"))
-				.toBeVisible();
+			await expect.element(component.getByText("Attributes (2)")).toBeVisible();
 			await expect.element(component.getByText("hostname")).toBeVisible();
-			await expect
-				.element(component.getByText("ip_address"))
-				.toBeVisible();
+			await expect.element(component.getByText("ip_address")).toBeVisible();
 		});
 
 		test("marks optional attributes with question mark", async () => {
@@ -206,9 +203,7 @@ describe("SchemaNode", () => {
 			const component = await renderSchemaNode(data);
 
 			// THEN
-			await expect
-				.element(component.getByText("(inherited)"))
-				.toBeVisible();
+			await expect.element(component.getByText("(inherited)")).toBeVisible();
 		});
 
 		test("does not render attributes section when empty", async () => {
@@ -243,12 +238,8 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByText("Relationships (2)"))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("interfaces"))
-				.toBeVisible();
-			await expect
-				.element(component.getByText("primary_site"))
-				.toBeVisible();
+			await expect.element(component.getByText("interfaces")).toBeVisible();
+			await expect.element(component.getByText("primary_site")).toBeVisible();
 			await expect.element(component.getByText("many")).toBeVisible();
 			await expect.element(component.getByText("one")).toBeVisible();
 		});
@@ -265,9 +256,7 @@ describe("SchemaNode", () => {
 			const component = await renderSchemaNode(data);
 
 			// THEN
-			await expect
-				.element(component.getByText("→ LocationSite"))
-				.toBeVisible();
+			await expect.element(component.getByText("→ LocationSite")).toBeVisible();
 		});
 
 		test("shows self-reference indicator for self-referencing relationships", async () => {
@@ -305,9 +294,7 @@ describe("SchemaNode", () => {
 			const component = await renderSchemaNode(data);
 
 			// THEN
-			await expect
-				.element(component.getByText("(inherited)"))
-				.toBeVisible();
+			await expect.element(component.getByText("(inherited)")).toBeVisible();
 		});
 
 		test("does not render relationships section when empty", async () => {
@@ -334,9 +321,7 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByText("↑ InfraGenericInterface"))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("↑ CoreNode"))
-				.toBeVisible();
+			await expect.element(component.getByText("↑ CoreNode")).toBeVisible();
 		});
 
 		test("does not render inheritance section when empty", async () => {
@@ -364,9 +349,7 @@ describe("SchemaNode", () => {
 			const component = await renderSchemaNode(data, { collapsed: true });
 
 			// THEN
-			await expect
-				.element(component.getByText("InfraDevice"))
-				.toBeVisible();
+			await expect.element(component.getByText("InfraDevice")).toBeVisible();
 			expect(component.container.textContent).not.toContain("hostname");
 			expect(component.container.textContent).not.toContain("primary_site");
 			expect(component.container.textContent).not.toContain("Attributes");
@@ -406,9 +389,7 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByRole("heading", { name: "Empty Node" }))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("InfraEmpty"))
-				.toBeVisible();
+			await expect.element(component.getByText("InfraEmpty")).toBeVisible();
 			expect(component.container.textContent).not.toContain("Attributes");
 			expect(component.container.textContent).not.toContain("Relationships");
 		});
@@ -447,22 +428,16 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByRole("heading", { name: "Device" }))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("InfraDevice"))
-				.toBeVisible();
+			await expect.element(component.getByText("InfraDevice")).toBeVisible();
 			await expect
 				.element(component.getByText("↑ InfraGenericDevice"))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("Attributes (2)"))
-				.toBeVisible();
+			await expect.element(component.getByText("Attributes (2)")).toBeVisible();
 			await expect
 				.element(component.getByText("Relationships (2)"))
 				.toBeVisible();
 			await expect.element(component.getByText("hostname")).toBeVisible();
-			await expect
-				.element(component.getByText("interfaces"))
-				.toBeVisible();
+			await expect.element(component.getByText("interfaces")).toBeVisible();
 		});
 
 		test("renders a generic with attributes and relationships", async () => {
@@ -481,16 +456,12 @@ describe("SchemaNode", () => {
 
 			// THEN
 			await expect
-				.element(
-					component.getByRole("heading", { name: "Generic Interface" }),
-				)
+				.element(component.getByRole("heading", { name: "Generic Interface" }))
 				.toBeVisible();
 			await expect
 				.element(component.getByText("Generic", { exact: true }))
 				.toBeVisible();
-			await expect
-				.element(component.getByText("Attributes (1)"))
-				.toBeVisible();
+			await expect.element(component.getByText("Attributes (1)")).toBeVisible();
 			await expect
 				.element(component.getByText("Relationships (1)"))
 				.toBeVisible();
