@@ -134,9 +134,20 @@ function WebviewApp({
 	);
 }
 
-// Re-rendering into the same container must unmount the previous React tree,
-// otherwise its body-class observer keeps re-rendering a detached graph.
-const activeRoots = new WeakMap<HTMLElement, Root>();
+// A previous React tree must be unmounted before a new one renders, otherwise
+// its body observer keeps re-rendering a detached graph on every theme change.
+// Hosts either reuse the container or swap in a fresh one, so match on both:
+// the same container, or any container no longer in the document.
+const activeRoots = new Map<HTMLElement, Root>();
+
+function unmountSupersededRoots(container: HTMLElement) {
+	for (const [mounted, root] of activeRoots) {
+		if (mounted === container || !mounted.isConnected) {
+			root.unmount();
+			activeRoots.delete(mounted);
+		}
+	}
+}
 
 // Create the render function that will be called from the webview
 window.renderSchemaVisualizer = (
@@ -148,8 +159,7 @@ window.renderSchemaVisualizer = (
 	},
 ) => {
 	// Clear any existing content
-	activeRoots.get(container)?.unmount();
-	activeRoots.delete(container);
+	unmountSupersededRoots(container);
 	container.innerHTML = "";
 
 	// Create a wrapper div with the root class for styling

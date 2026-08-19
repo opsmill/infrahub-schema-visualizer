@@ -149,10 +149,18 @@ describe("SchemaNode", () => {
 			await expect
 				.element(component.getByRole("heading", { name: "Device" }))
 				.toBeVisible();
-			// Node type has no badge label (config.label is null)
-			expect(component.container.textContent).not.toContain("Profile");
-			expect(component.container.textContent).not.toContain("Template");
-			expect(component.container.textContent).not.toContain("Generic");
+			// Node type has no badge label (config.label is null). Assert the badge
+			// element is absent rather than grepping text: kinds like
+			// InfraGenericDevice put "Generic" in the rendered inheritance chain.
+			await expect
+				.element(component.getByText("Profile", { exact: true }))
+				.not.toBeInTheDocument();
+			await expect
+				.element(component.getByText("Template", { exact: true }))
+				.not.toBeInTheDocument();
+			await expect
+				.element(component.getByText("Generic", { exact: true }))
+				.not.toBeInTheDocument();
 		});
 	});
 

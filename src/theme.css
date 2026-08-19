@@ -76,11 +76,15 @@
  * Dark palette: warm stone-based neutrals so the visualizer harmonizes with
  * embedders using warm dark themes.
  *
- * The dark block is generated for two selectors as SEPARATE rules (not one
- * selector list): `:has()` support must not gate the component-level rule —
- * in a browser without `:has()`, one invalid selector in a shared list would
- * drop the whole rule. The :has() variant lets the webview wrapper
- * (.schema-visualizer-root) inherit the flipped tokens.
+ * The dark block is emitted as two SEPARATE rules (not one selector list):
+ * `:has()` support must not gate the component-level rule — in a browser
+ * without `:has()`, one invalid selector in a shared list would drop the whole
+ * rule.
+ *
+ * The :has() variant is not a mirror of the palette. It carries only the few
+ * tokens the webview wrapper itself paints with, and it spells their values
+ * out because it does not define the palette it would otherwise reference.
+ * Adding a wrapper-level token means adding it there too.
  */
 .schema-visualizer[data-theme="dark"] {
 	--sv-canvas: #0c0a09;
@@ -125,8 +129,8 @@
 	--sv-profile-text: oklch(70.2% 0.183 293.541);
 	--sv-template-text: oklch(75% 0.183 55.934);
 
-	--sv-scrollbar-track: #1c1917;
-	--sv-scrollbar-thumb: #44403c;
+	--sv-scrollbar-track: var(--sv-surface);
+	--sv-scrollbar-thumb: var(--sv-surface-5);
 	--sv-scrollbar-thumb-hover: #57534e;
 
 	/*
@@ -137,7 +141,7 @@
 	 * matching pre-dark behavior exactly.
 	 */
 	--xy-background-color: var(--sv-canvas);
-	--xy-background-pattern-color: #44403c;
+	--xy-background-pattern-color: var(--sv-surface-5);
 }
 
 .schema-visualizer-root:has(.schema-visualizer[data-theme="dark"]) {

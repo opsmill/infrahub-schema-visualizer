@@ -103,8 +103,10 @@ function SchemaVisualizerInner({
 	const [savedViewport, setSavedViewport] = useAtom(viewportAtom);
 
 	const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const lastViewportRef = useRef<Viewport | null>(null);
 	const handleViewportChange = useCallback(
 		(viewport: Viewport) => {
+			lastViewportRef.current = viewport;
 			if (viewportTimerRef.current) clearTimeout(viewportTimerRef.current);
 			viewportTimerRef.current = setTimeout(() => {
 				setSavedViewport(viewport);
@@ -113,13 +115,20 @@ function SchemaVisualizerInner({
 		[setSavedViewport],
 	);
 
-	// Unmounting must drop the pending debounced write, or it fires into the
-	// shared store after a replacement tree has already mounted.
+	// A pending debounced write must not survive unmount: firing it later lands
+	// in the shared store after a replacement tree has mounted. Flush it
+	// synchronously rather than dropping it, so panning and immediately closing
+	// still persists the position.
 	useEffect(() => {
 		return () => {
-			if (viewportTimerRef.current) clearTimeout(viewportTimerRef.current);
+			if (!viewportTimerRef.current) return;
+			clearTimeout(viewportTimerRef.current);
+			viewportTimerRef.current = null;
+			if (lastViewportRef.current) {
+				setSavedViewport(lastViewportRef.current);
+			}
 		};
-	}, []);
+	}, [setSavedViewport]);
 
 	const [isFilterOpen, setIsFilterOpen] = useState(defaultFilterOpen);
 	const [selectedNodeKind, setSelectedNodeKind] = useState<string | null>(null);

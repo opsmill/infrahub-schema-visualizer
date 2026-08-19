@@ -65,12 +65,25 @@ detection). The embedding application resolves the theme and passes it in:
 
 All colors come from `--sv-*` CSS custom properties defined in
 `src/theme.css`: light values on `:root`, dark overrides scoped to the
-component root. To re-brand a token, override it on a selector more specific
-than `:root` (e.g. `.schema-visualizer { --sv-accent: ...; }`) so the
-override wins regardless of stylesheet order. In the VS Code webview build,
-`renderSchemaVisualizer` accepts an optional `theme` in its options; when
-omitted it follows VS Code's own theme class on `<body>` (`vscode-dark` /
-`vscode-high-contrast`), live.
+component root. An override has to beat both. `.schema-visualizer` already
+wins over `:root` — not on specificity, since both are `(0,1,0)`, but by
+sitting closer in the inheritance chain — yet it still loses to the dark rule
+`.schema-visualizer[data-theme="dark"]`, which is `(0,2,0)` on the same
+element and sets most of the palette. Qualify each theme instead:
+
+```css
+.schema-visualizer[data-theme="light"] {
+	--sv-accent: #7c3aed;
+}
+.schema-visualizer[data-theme="dark"] {
+	--sv-accent: #a78bfa;
+}
+```
+
+In the VS Code webview build, `renderSchemaVisualizer` accepts an optional
+`theme` in its options; when omitted it follows VS Code's own resolved theme
+on `<body>` (the `data-vscode-theme-kind` attribute, falling back to the
+`vscode-*` classes), live.
 
 Standalone exports (`FilterPanel`, `NodeDetailsPanel`, ...) render with the
 light palette by default; wrap them in
